@@ -1,0 +1,12 @@
+0cd84c469c83f05ffa4af09eb9b81cd9 *DESCRIPTION
+cedac6642ec7f60bb50ce03d895986ec *NAMESPACE
+bff9ebe0278603b7992c5553d00387bd *R/map_records.R
+f5cbe328dfef1d5eafc1ce563f643559 *R/utils.R
+91790f3656712ed622adfd83de7ffc51 *inst/mapping/insilicova_mapping.txt
+68308e2d67aad2f6c4fc9b404969a5fe *inst/mapping/interva4_mapping.txt
+6525df2015524d177fb54c405fadf6be *inst/mapping/tariff2_mapping.txt
+55e325ff7dc0fb2e4f07f49aa6dfa2d6 *inst/sample/who_va_output.csv
+5a3ecc33397a73904843c5c03a4cffa1 *man/map_records.Rd
+04a379a5a4ce3d5ad6d22ba555a11f6f *man/map_records_insilicova.Rd
+76c4088df250bbd4bee13d3aedad25cf *man/map_records_interva4.Rd
+038352c65909c87d36f334936b9f130f *man/map_records_tariff2.Rd
