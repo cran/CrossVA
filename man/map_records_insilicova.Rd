@@ -31,4 +31,3 @@ output_data <- map_records_tariff2(records)
 \references{
 Tyler H. McCormick, Zehang R. Li, Clara Calvert, Amelia C. Crampin, Kathleen Kahn and Samuel J. Clark (2014). Probabilistic cause-of-death assignment using verbal autopsies, Journal of the American Statistical Association, to appear
 }
-

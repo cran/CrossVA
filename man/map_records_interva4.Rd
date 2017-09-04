@@ -31,4 +31,3 @@ output_data <- map_records_interva4(records)
 \references{
 http://www.interva.net/
 }
-
