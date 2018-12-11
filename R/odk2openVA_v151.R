@@ -9,9 +9,9 @@
 #'
 #' @examples
 #' \dontrun{
-#' record_f_name <- system.file("sample", "who151_va_output.csv", package = "CrossVA")
-#' records <- read.csv(record_f_name)
-#' output_data_IV5 <- odk2openVA_v151(records)
+#' record_f_name <- system.file("sample", "who151_odk_export.csv", package = "CrossVA")
+#' records <- read.csv(record_f_name, stringsAsFactors = FALSE)
+#' output <- odk2openVA_v151(records)
 #' }
 #'
 #' @export
@@ -123,11 +123,26 @@ odk2openVA_v151 <- function(odk){
 
     iv5Out <- matrix(".", nrow = nrow(odk), ncol=353)
 
+    # check for missing indicators
+    tmpMat <- matrix(sapply(whoNames, stri_detect_fixed, str = odkNames), nrow = length(odkNames))
+    indexData <- apply(tmpMat, 2, which)
+    warnZeroMatch <- which(sapply(indexData, length) == 0)
+    if (length(warnZeroMatch) > 0) {
+        warning("Problem with data", call. = FALSE)
+        cat(
+            paste("Expecting indicator(s) with name(s): ",
+                  whoNames[warnZeroMatch],
+                  sep = ""),
+            sep = "\n"
+        )
+        stop("Please add above columns to your data frame")
+    }
+
     ## function for creating simple Y/N indicators
     qYesNo <- c(20:40, 42, 44:51, 54:74, 78, 81:82, 85:89, 92, 95, 98:100,
-		102:103, 106, 110, 112:116, 118:122, 127, 131, 134:135, 138, 140:143, 145:148,
+		102:103, 106, 112:116, 118:122, 127, 131, 134:135, 138, 140, 142:143, 145:148,
 		151:160, 162, 169:180, 182, 184:192, 200, 204:205, 207:213, 215:223,
-		225:238, 240:251, 254:265, 267:270, 274:280, 282, 288:292, 296:303,
+		225:238, 240:242, 244:251, 254:265, 267:270, 274:280, 282, 288:292, 296:303,
 		305:306, 308:312, 315:330, 333:353)
 
     ## tmpMat <- matrix(sapply(whoNames[qYesNo], stri_detect_fixed, str = odkNames), nrow = length(odkNames))
@@ -142,8 +157,8 @@ odk2openVA_v151 <- function(odk){
 
     indexData <- apply(tmpMat, 2, which)
     iv5Out[ , qYesNo] <- as.matrix(odk[ , indexData])
-    iv5Out[iv5Out=="yes"] <- "Y"
-    iv5Out[iv5Out=="no"] <- "N"
+    iv5Out[iv5Out=="yes"] <- "y"
+    iv5Out[iv5Out=="no"] <- "n"
     iv5Out[iv5Out=="dk"] <- "."
     iv5Out[iv5Out=="ref"] <- "."
     iv5Out[iv5Out==""] <- "."
@@ -153,20 +168,20 @@ odk2openVA_v151 <- function(odk){
     #1) Did s(he) die during the wet season? d wet & 2) Did s(he) die during the dry season? d dry
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[1]))
     ## table(odk[ , indexData])
-    iv5Out[tolower(odk[ , indexData])=="wet" | tolower(odk[ , indexData])=="wet season", 1] <- "Y" ## wet season
-    iv5Out[tolower(odk[ , indexData])=="dry" | tolower(odk[ , indexData])=="dry season", 1] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="wet" | tolower(odk[ , indexData])=="wet season", 1] <- "y" ## wet season
+    iv5Out[tolower(odk[ , indexData])=="dry" | tolower(odk[ , indexData])=="dry season", 1] <- "n"
 
-    iv5Out[tolower(odk[ , indexData])=="wet" | tolower(odk[ , indexData])=="wet season", 2] <- "N" ## dry season
-    iv5Out[tolower(odk[ , indexData])=="dry" | tolower(odk[ , indexData])=="dry season", 2] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="wet" | tolower(odk[ , indexData])=="wet season", 2] <- "n" ## dry season
+    iv5Out[tolower(odk[ , indexData])=="dry" | tolower(odk[ , indexData])=="dry season", 2] <- "y"
 
     #3) Was he male? male & ##4) Was he female? female
     indexData_sex <- which(stri_endswith_fixed(odkNames, whoNames[3]))
     ## table(odk[ , indexData_sex])
-    iv5Out[tolower(odk[ , indexData_sex])=="male",   3] <- "Y" ## male
-    iv5Out[tolower(odk[ , indexData_sex])=="female", 3] <- "N"
+    iv5Out[tolower(odk[ , indexData_sex])=="male",   3] <- "y" ## male
+    iv5Out[tolower(odk[ , indexData_sex])=="female", 3] <- "n"
 
-    iv5Out[tolower(odk[ , indexData_sex])=="male",   4] <- "N" ## female
-    iv5Out[tolower(odk[ , indexData_sex])=="female", 4] <- "Y"
+    iv5Out[tolower(odk[ , indexData_sex])=="male",   4] <- "n" ## female
+    iv5Out[tolower(odk[ , indexData_sex])=="female", 4] <- "y"
 
     # age
     indexData1y <- which(stri_detect_regex(odkNames, "ageinyears$"))   ## exclude ageInXXXXRemain
@@ -187,134 +202,137 @@ odk2openVA_v151 <- function(odk){
     ## indexData5m <- which(stri_detect_regex(odkNames, "age_neonate_minutes"))
 
     #5) Was s(he) aged 65 years or more at death? 65+
-    iv5Out[odk[ , indexData1y]>=65, 5] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]>=65, 5] <- "Y"
+    iv5Out[odk[ , indexData1y]>=65, 5] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]>=65, 5] <- "y"
 
     #6) Was s(he) aged 50 to 64 years at death? 50 to 64
-    iv5Out[odk[ , indexData1y]< 65 & odk[ , indexData1y]>=50, 6] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ ,indexData2]=="adult" & odk[ ,indexData3]< 65 & odk[ ,indexData3]>=50, 6] <- "Y"
+    iv5Out[odk[ , indexData1y]< 65 & odk[ , indexData1y]>=50, 6] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ ,indexData2]=="adult" & odk[ ,indexData3]< 65 & odk[ ,indexData3]>=50, 6] <- "y"
 
     #7) Was s(he) aged 15 to 49 years at death? 15-49
-    iv5Out[odk[ , indexData1y]< 50 & odk[ , indexData1y]>=15, 7] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=15, 7] <- "Y"
+    iv5Out[odk[ , indexData1y]< 50 & odk[ , indexData1y]>=15, 7] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=15, 7] <- "y"
 
     #8) Was s(he) aged 5-14 years at death? 5-14 (adult or child)
-    iv5Out[odk[ , indexData1y]< 15 & odk[ , indexData1y]>= 5, 8] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 15 & odk[ , indexData3]>=5, 8] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 15*365.25 & odk[ , indexData4d]>=5*365.25, 8] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 15*12 & odk[ , indexData4m]>=5*12, 8] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="years" & odk[ , indexData4y]< 15 & odk[ , indexData4y]>=5, 8] <- "Y"
+    iv5Out[odk[ , indexData1y]< 15 & odk[ , indexData1y]>= 5, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 15 & odk[ , indexData3]>=5, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 15*365.25 & odk[ , indexData4d]>=5*365.25, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 15*12 & odk[ , indexData4m]>=5*12, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="years" & odk[ , indexData4y]< 15 & odk[ , indexData4y]>=5, 8] <- "y"
 
     #9) Was s(he) aged 1 to 4 years at death? 1 to 4 (child)
-    iv5Out[odk[ , indexData1y]<  5 & odk[ , indexData1y]>=1, 9] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 5*365.25 & odk[ , indexData4d]>=1*365.25, 9] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 5*12 & odk[ , indexData4m]>=1*12, 9] <- "Y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="years" & odk[ , indexData4y]< 5 & odk[ , indexData4y]>=1, 9] <- "Y"
+    iv5Out[odk[ , indexData1y]<  5 & odk[ , indexData1y]>=1, 9] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 5*365.25 & odk[ , indexData4d]>=1*365.25, 9] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 5*12 & odk[ , indexData4m]>=1*12, 9] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="years" & odk[ , indexData4y]< 5 & odk[ , indexData4y]>=1, 9] <- "y"
 
     #10) Was s(he) aged 1 to 11 months at death? 1-11 months (child or neonate?)
-    iv5Out[odk[ , indexData1d]< 365.25 & odk[ , indexData1d]>=30.4, 10] <- "Y"
-    iv5Out[is.na(odk[ , indexData1d]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 365.25 & odk[ , indexData4d]>=29, 10] <- "Y"
-    iv5Out[is.na(odk[ , indexData1m]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 12 & odk[ , indexData4m]>=1, 10] <- "Y"
+    iv5Out[odk[ , indexData1d]< 365.25 & odk[ , indexData1d]>=28, 10] <- "y"
+    iv5Out[is.na(odk[ , indexData1d]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 365.25 & odk[ , indexData4d]>=28, 10] <- "y"
+    iv5Out[is.na(odk[ , indexData1m]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 12 & odk[ , indexData4m]>=1, 10] <- "y"
 
     #11) Was s(he) aged < 1 month (28 days) at death? 0 - 27 days (neonate)
-    iv5Out[odk[ , indexData1d]< 28, 11] <- "Y"
-    iv5Out[is.na(odk[ , indexData1d]) & odk[ , indexData2]=="neonate", 11] <- "Y"
+    iv5Out[odk[ , indexData1d]< 28, 11] <- "y"
+    iv5Out[is.na(odk[ , indexData1d]) & odk[ , indexData2]=="neonate", 11] <- "y"
 
     #12) Was s(he) a live baby who died within 24 hours of birth? day0 iv5Names[12]
-    iv5Out[odk[ , indexData1d]< 1, 12] <- "Y"
+    iv5Out[odk[ , indexData1d]< 1, 12] <- "y"
     ageNeonate <- odk[ , indexData5d]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 1    , 12] <- "Y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 1    , 12] <- "y"
 
     #13) Was s(he) a baby who died between 24 and 48 hours of birth? day1 iv5Names[13]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 2 & ageNeonate>=1, 13] <- "Y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 2 & ageNeonate>=1, 13] <- "y"
 
     #14)  Was s(he) a baby who died more than 48 hours from birth, but within the first week? day2-6 iv5Names[14]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 7 & ageNeonate>=2, 14] <- "Y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 7 & ageNeonate>=2, 14] <- "y"
 
     #15) Was s(he) a baby who died after the first week, but within the first month? wk2-4 iv5Names[15]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 28 & ageNeonate>=7, 15] <- "Y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 28 & ageNeonate>=7, 15] <- "y"
 
-    # Finish coding age (5-15) -- if only only one age has "Y", recode all others to "N"
-    ## e.g., if age 65 == "Y", then age 50-64 == "N" and age 15-49 == "N" etc.
-    indexData6 <-iv5Out[ , 5:15] != "Y"            ## identify elements in age columns that do not equal "Y"
-    indexData7 <- rowSums(iv5Out[ , 5:15] == "Y")  ## identify with rows/records only have 1 "Y" for all age columns
-    ## Now recode all "N"
-    iv5Out[indexData7 == 1, 5:15][ indexData6[indexData7 == 1, ] ] <- "N"
+    # Finish coding age (5-15) -- if only only one age has "y", recode all others to "n"
+    ## e.g., if age 65 == "y", then age 50-64 == "n" and age 15-49 == "n" etc.
+    indexData6 <-iv5Out[ , 5:15] != "y"            ## identify elements in age columns that do not equal "y"
+    indexData7 <- rowSums(iv5Out[ , 5:15] == "y")  ## identify with rows/records only have 1 "y" for all age columns
+    ## Now recode all "n"
+    iv5Out[indexData7 == 1, 5:15][ indexData6[indexData7 == 1, ] ] <- "n"
 
     #16) Was she a woman aged 12-19 years at death? f-19
-    iv5Out[ , 16] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 19 & odk[ , indexData1y]>= 12, "Y", ".")
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 19 & odk[ , indexData3]>=12, 16] <- "Y"
+    iv5Out[ , 16] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 19 & odk[ , indexData1y]>= 12, "y", ".")
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 19 & odk[ , indexData3]>=12, 16] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate", 16] <- "n"
 
     #17) Was she a woman aged 20-34 years at death? f20-34
-    iv5Out[ , 17] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 35 & odk[ , indexData1y]>= 20, "Y", ".")
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 35 & odk[ , indexData3]>=20, 17] <- "Y"
+    iv5Out[ , 17] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 35 & odk[ , indexData1y]>= 20, "y", ".")
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 35 & odk[ , indexData3]>=20, 17] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate", 17] <- "n"
 
     #18) Was she a woman aged 35 to 49 years at death? f35-49
-    iv5Out[ , 18] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 50 & odk[ , indexData1y]>= 35, "Y", ".")
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=35, 18] <- "Y"
+    iv5Out[ , 18] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 50 & odk[ , indexData1y]>= 35, "y", ".")
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=35, 18] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate", 18] <- "n"
 
     #19) Was she married at the time of death? married
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[19]))
     ## table(odk[ , indexData])
-    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="married", 19] <- "Y"
-    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="single", 19] <- "N"
-    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="partner", 19] <- "N"
-    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="divorced", 19] <- "N"
-    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="widowed", 19] <- "N"
-    iv5Out[odk[ , indexData_sex]=="male", 19] <- "N"
+    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="married", 19] <- "y"
+    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="single", 19] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="partner", 19] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="divorced", 19] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & tolower(odk[ , indexData])=="widowed", 19] <- "n"
+    iv5Out[odk[ , indexData_sex]=="male", 19] <- "n"
 
     #41) Was it more than 5 minutes after birth before the baby first cried? cry 5+m
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[41]))
-    iv5Out[odk[ , indexData]> 5, 41] <- "Y"
-    iv5Out[odk[ , indexData]<=5, 41] <- "N"
+    iv5Out[odk[ , indexData]> 5, 41] <- "y"
+    iv5Out[odk[ , indexData]<=5, 41] <- "n"
 
     #43) Did the baby stop crying more than a day before (s)he died? cry st 1+d
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[43]))
-    iv5Out[odk[ , indexData]> 24, 43] <- "Y"
-    iv5Out[odk[ , indexData]<=24, 43] <- "N"
+    iv5Out[odk[ , indexData]> 24, 43] <- "y"
+    iv5Out[odk[ , indexData]<=24, 43] <- "n"
 
     #52) Did the final illness last less than 3 weeks? ill <3w.
     indexDatad <- which(stri_detect_regex(odkNames, "id10120$"))
-    iv5Out[odk[ , indexDatad]< 21, 52] <- "Y"
-    iv5Out[odk[ , indexDatad]>=21, 52] <- "N"
+    iv5Out[odk[ , indexDatad]< 21, 52] <- "y"
+    iv5Out[odk[ , indexDatad]>=21, 52] <- "n"
 
     #53) Did the final illness last at least 3 weeks? ill 3+w
-    iv5Out[odk[ , indexDatad]>=21, 53] <- "Y"
-    iv5Out[odk[ , indexDatad]< 21, 53] <- "N"
+    iv5Out[odk[ , indexDatad]>=21, 53] <- "y"
+    iv5Out[odk[ , indexDatad]< 21, 53] <- "n"
 
     #75) Did the fever last less than a week before death? fev <1w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[75]))
-    iv5Out[odk[ , indexData]< 7, 75] <- "Y"
-    iv5Out[odk[ , indexData]>=7, 75] <- "N"
+    iv5Out[odk[ , indexData]< 7, 75] <- "y"
+    iv5Out[odk[ , indexData]>=7, 75] <- "n"
 
     #76) Did the fever last at least one week, but less than 2 weeks before death? fev 1-2w
-    iv5Out[odk[ , indexData]>= 7 & odk[ , indexData]< 14, 76] <- "Y"
-    iv5Out[odk[ , indexData]<  7,                         76] <- "N"
+    iv5Out[odk[ , indexData]>= 7 & odk[ , indexData]< 14, 76] <- "y"
+    iv5Out[odk[ , indexData]<  7,                         76] <- "n"
 
     #77) Did the fever last at least 2 weeks before death? fev 2+w
-    iv5Out[odk[ , indexData]>= 14, 77] <- "Y"
-    iv5Out[odk[ , indexData]<  14, 77] <- "N"
+    iv5Out[odk[ , indexData]>= 14, 77] <- "y"
+    iv5Out[odk[ , indexData]<  14, 77] <- "n"
 
     #79) Was the fever severe? fev sev
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[79]))
-    iv5Out[tolower(odk[ , indexData])=="severe",   79] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="mild",     79] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="moderate", 79] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="severe",   79] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="mild",     79] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="moderate", 79] <- "n"
 
     #80) Was the fever continuous? fev cont
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[80]))
-    iv5Out[tolower(odk[ , indexData])=="continuous", 80] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="nightly",    80] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="on_and_off", 80] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="continuous", 80] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="nightly",    80] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="on_and_off", 80] <- "n"
 
     #83) Did the cough last less than 3 weeks before death? cou <3w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[83]))
-    iv5Out[odk[ , indexData[1]]< 21, 83] <- "Y"
-    iv5Out[odk[ , indexData[1]]>=21, 83] <- "N"
+    iv5Out[odk[ , indexData[1]]< 21, 83] <- "y"
+    iv5Out[odk[ , indexData[1]]>=21, 83] <- "n"
 
     #84) Did the cough last at least 3 weeks before death? cou 3+w
-    iv5Out[odk[ , indexData[1]]>=21, 84] <- "Y"
-    iv5Out[odk[ , indexData[1]]< 21, 84] <- "N"
+    iv5Out[odk[ , indexData[1]]>=21, 84] <- "y"
+    iv5Out[odk[ , indexData[1]]< 21, 84] <- "n"
 
     #90) Did the difficult breathing last for at least 3 days before death? dif br 3d
     indexDatad <- which(stri_endswith_fixed(odkNames, whoNames[90]))
@@ -322,48 +340,48 @@ odk2openVA_v151 <- function(odk){
     indexDatay <- which(stri_endswith_fixed(odkNames, "id10163"))
 
     ## indexDatad; odkNames[indexDatad]. #
-    iv5Out[odk[ , indexDatad]>=3, 90] <- "Y"
-    iv5Out[odk[ , indexDatad]< 3, 90] <- "N"
+    iv5Out[odk[ , indexDatad]>=3, 90] <- "y"
+    iv5Out[odk[ , indexDatad]< 3, 90] <- "n"
 
-    iv5Out[odk[ , indexDatam]>=1, 90] <- "Y"
-    iv5Out[odk[ , indexDatay]>=1, 90] <- "Y"
+    iv5Out[odk[ , indexDatam]>=1, 90] <- "y"
+    iv5Out[odk[ , indexDatay]>=1, 90] <- "y"
 
     #91) Was the difficult breathing continuous during this period? dif br con
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[91]))
-    iv5Out[tolower(odk[ , indexData])=="continuous", 91] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="on_and_off", 91] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="continuous", 91] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="on_and_off", 91] <- "n"
 
     #93) Did the fast breathing last for less than two weeks before death? br fs <2w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[93]))
-    iv5Out[odk[ , indexData[1]]< 14, 93] <- "Y"
-    iv5Out[odk[ , indexData[1]]>=14, 93] <- "N"
+    iv5Out[odk[ , indexData[1]]< 14, 93] <- "y"
+    iv5Out[odk[ , indexData[1]]>=14, 93] <- "n"
 
     #94) Did the fast breathing last for at least 2 weeks before death? br fs 2+w
-    iv5Out[odk[ , indexData[1]]>=14, 94] <- "Y"
-    iv5Out[odk[ , indexData[1]]< 14, 94] <- "N"
+    iv5Out[odk[ , indexData[1]]>=14, 94] <- "y"
+    iv5Out[odk[ , indexData[1]]< 14, 94] <- "n"
 
     #96) Did the breathlessness last for less than 2 weeks before death? brl <2w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[96]))
-    iv5Out[odk[ , indexData[1]]< 14, 96] <- "Y"
-    iv5Out[odk[ , indexData[1]]>=14, 96] <- "N"
+    iv5Out[odk[ , indexData[1]]< 14, 96] <- "y"
+    iv5Out[odk[ , indexData[1]]>=14, 96] <- "n"
 
     #97) Did the breathlessness last for at least 2 weeks before death? brl 2+w
-    iv5Out[odk[ , indexData[1]]>=14, 97] <- "Y"
-    iv5Out[odk[ , indexData[1]]< 14, 97] <- "N"
+    iv5Out[odk[ , indexData[1]]>=14, 97] <- "y"
+    iv5Out[odk[ , indexData[1]]< 14, 97] <- "n"
 
     #101) Did his/her breathing sound like wheezing or grunting? whz grun
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[101]))
 
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "grunting"), 101] <- "Y"
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "stridor"), 101] <- "Y"
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "wheezing"), 101] <- "Y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "grunting"), 101] <- "y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "stridor"), 101] <- "y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "wheezing"), 101] <- "y"
 
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "no"), 101] <- "N"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "no"), 101] <- "n"
 
     #104) Did (s)he experience chest pain at least 3 days before death? chp 3d
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[104]))
-    iv5Out[odk[ , indexData]>=3, 104] <- "Y"
-    iv5Out[odk[ , indexData]< 3, 104] <- "N"
+    iv5Out[odk[ , indexData]>=3, 104] <- "y"
+    iv5Out[odk[ , indexData]< 3, 104] <- "n"
 
     #105) Did the chest pain last for at least 30 minutes? chp 30m
     indexData_unit <- which(stri_endswith_fixed(odkNames, "id10178_unit"))  # minutes or hours or days
@@ -371,26 +389,31 @@ odk2openVA_v151 <- function(odk){
     indexDatah <- which(stri_endswith_fixed(odkNames, "id10179"))           # hours
     indexDatad <- which(stri_endswith_fixed(odkNames, "id10179_1"))         # days
 
-    iv5Out[tolower(odk[ , indexData_unit]) == "minutes" & odk[ , indexDatam] >= 30, 105] <- "Y"
-    iv5Out[tolower(odk[ , indexData_unit]) == "hours" & odk[ , indexDatah] >= 0.5, 105] <- "Y"
-    iv5Out[tolower(odk[ , indexData_unit]) == "days" & odk[ , indexDatad] >= 1, 105] <- "Y"
+    iv5Out[tolower(odk[ , indexData_unit]) == "minutes" & odk[ , indexDatam] >= 30, 105] <- "y"
+    iv5Out[tolower(odk[ , indexData_unit]) == "hours" & odk[ , indexDatah] >= 0.5, 105] <- "y"
+    iv5Out[tolower(odk[ , indexData_unit]) == "days" & odk[ , indexDatad] >= 1, 105] <- "y"
 
-    iv5Out[tolower(odk[ , indexData_unit]) == "minutes" & odk[ , indexDatam] < 30, 105] <- "N"
-    iv5Out[tolower(odk[ , indexData_unit]) == "hours" & odk[ , indexDatah] < .5, 105] <- "N"
+    iv5Out[tolower(odk[ , indexData_unit]) == "minutes" & odk[ , indexDatam] < 30, 105] <- "n"
+    iv5Out[tolower(odk[ , indexData_unit]) == "hours" & odk[ , indexDatah] < .5, 105] <- "n"
 
     #107) Did (s)he have diarrhoea for less than 2 weeks before death? drr <2w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[107]))
-    iv5Out[odk[ , indexData]< 14, 107] <- "Y"
-    iv5Out[odk[ , indexData]>=14, 107] <- "N"
+    iv5Out[odk[ , indexData]< 14, 107] <- "y"
+    iv5Out[odk[ , indexData]>=14, 107] <- "n"
 
     #108) Did (s)he have diarrhoea for at least 2 weeks but less than 4 weeks before death? drr 2-4w
-    iv5Out[odk[ , indexData]< 28 & odk[ , indexData]>=14, 108] <- "Y"
-    iv5Out[odk[ , indexData]< 14,                         108] <- "N"
-    iv5Out[odk[ , indexData]>=28,                         108] <- "N"
+    iv5Out[odk[ , indexData]< 28 & odk[ , indexData]>=14, 108] <- "y"
+    iv5Out[odk[ , indexData]< 14,                         108] <- "n"
+    iv5Out[odk[ , indexData]>=28,                         108] <- "n"
 
     #109) Did (s)he have diarrhoea for at least 4 weeks before death? drr 4+w
-    iv5Out[odk[ , indexData]>=28, 109] <- "Y"
-    iv5Out[odk[ , indexData]< 28, 109] <- "N"
+    iv5Out[odk[ , indexData]>=28, 109] <- "y"
+    iv5Out[odk[ , indexData]< 28, 109] <- "n"
+
+    #110) Did the baby or child have at least 4 stools on the day that loose liquid stools were most frequent? 4+ stls
+    indexData <- which(stri_endswith_fixed(odkNames, whoNames[110]))
+    iv5Out[odk[ , indexData]>= 4 & odk[ , indexData]< 999, 110] <- "y"
+    iv5Out[odk[ , indexData]<  4, 110] <- "n"
 
     #111) Did the frequent loose or liquid stools start at least 3 days before death?
     indexData181        <- which(stri_endswith_fixed(odkNames, "id10181"))        # frequent/loose stools yes/no
@@ -403,25 +426,25 @@ odk2openVA_v151 <- function(odk){
     indexData184_b      <- which(stri_endswith_fixed(odkNames, "id10184_b"))      # length in days
     indexData184_c      <- which(stri_endswith_fixed(odkNames, "id10184_c"))      # length in months
 
-    iv5Out[odk[ , indexData184_a] >= 3 & 
-      tolower(odk[ , indexData181]) == "yes" & tolower(odk[ , indexDataIsNeonatal]) == "yes", 111] <- "Y"
-    iv5Out[odk[ , indexData184_a] <  3 & 
-      tolower(odk[ , indexData181]) == "yes" & tolower(odk[ , indexDataIsNeonatal]) == "yes", 111] <- "N"
+    iv5Out[odk[ , indexData184_a] >= 3 &
+      tolower(odk[ , indexData181]) == "yes" & tolower(odk[ , indexDataIsNeonatal]) == "yes", 111] <- "y"
+    iv5Out[odk[ , indexData184_a] <  3 &
+      tolower(odk[ , indexData181]) == "yes" & tolower(odk[ , indexDataIsNeonatal]) == "yes", 111] <- "n"
 
-    iv5Out[odk[ , indexData184_b] >= 3 & tolower(odk[ , indexData184_units]) == "days", 111] <- "Y"
-    iv5Out[odk[ , indexData184_b] <  3 & tolower(odk[ , indexData184_units]) == "days", 111] <- "N"
+    iv5Out[odk[ , indexData184_b] >= 3 & tolower(odk[ , indexData184_units]) == "days", 111] <- "y"
+    iv5Out[odk[ , indexData184_b] <  3 & tolower(odk[ , indexData184_units]) == "days", 111] <- "n"
 
-    iv5Out[odk[ , indexData184_c] >= 1 & tolower(odk[ , indexData184_units]) == "months", 111] <- "Y"
+    iv5Out[odk[ , indexData184_c] >= 1 & tolower(odk[ , indexData184_units]) == "months", 111] <- "y"
 
     #117) Did (s)he vomit for at least 3 days before death?
     indexData190_units <- which(stri_endswith_fixed(odkNames, "id10190_units"))  # days or months
     indexData190_a     <- which(stri_endswith_fixed(odkNames, "id10190_a"))      # length in days
     indexData190_b     <- which(stri_endswith_fixed(odkNames, "id10190_b"))      # length in months
 
-    iv5Out[odk[ , indexData190_a] >= 3 & tolower(odk[ , indexData190_units]) == "days", 117] <- "Y"
-    iv5Out[odk[ , indexData190_a] <  3 & tolower(odk[ , indexData190_units]) == "days", 117] <- "N"
+    iv5Out[odk[ , indexData190_a] >= 3 & tolower(odk[ , indexData190_units]) == "days", 117] <- "y"
+    iv5Out[odk[ , indexData190_a] <  3 & tolower(odk[ , indexData190_units]) == "days", 117] <- "n"
 
-    iv5Out[odk[ , indexData190_b] >= 1 & tolower(odk[ , indexData190_units]) == "months", 117] <- "Y"
+    iv5Out[odk[ , indexData190_b] >= 1 & tolower(odk[ , indexData190_units]) == "months", 117] <- "y"
 
     #123) Did (s)he have severe abdominal pain for less than 2 weeks before death? abd p <2w
     indexData  <- which(stri_endswith_fixed(odkNames, whoNames[122]))
@@ -429,280 +452,290 @@ odk2openVA_v151 <- function(odk){
     indexDatah <- which(stri_endswith_fixed(odkNames, "id10196"))
     indexDatam <- which(stri_endswith_fixed(odkNames, "id10198"))
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14, 123] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14, 123] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14, 123] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14, 123] <- "n"
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]< (24*14), 123] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]>=(24*14), 123] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]< (24*14), 123] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]>=(24*14), 123] <- "n"
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]< 1, 123] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="no", 123] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]< 1, 123] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="no", 123] <- "n"
 
     #124) Did (s)he have severe abdominal pain for at least 2 weeks before death? abd p 2+w
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14, 124] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14, 124] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14, 124] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14, 124] <- "n"
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]>=(24*14), 124] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]< (24*14), 124] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]>=(24*14), 124] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatah]< (24*14), 124] <- "n"
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1, 124] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1, 124] <- "y"
 
-    iv5Out[tolower(odk[ , indexData])=="no", 124] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="no", 124] <- "n"
 
     #125) Was the pain in the upper abdomen? abd p up
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[125]))
-    iv5Out[tolower(odk[ , indexData])=="upper_abdomen",       125] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="upper_lower_abdomen", 125] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="lower_abdomen",       125] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="upper_abdomen",       125] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="upper_lower_abdomen", 125] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="lower_abdomen",       125] <- "n"
 
 
     #126) Was the pain in the lower abdomen? abd p lo
-    iv5Out[tolower(odk[ , indexData])=="upper_abdomen",       126] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="upper_lower_abdomen", 126] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="lower_abdomen",       126] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="upper_abdomen",       126] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="upper_lower_abdomen", 126] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="lower_abdomen",       126] <- "y"
 
     #128) Did (s)he have a more than usually protruding abdomen for less than 2 weeks before death? abd pr <2w
     indexData  <- which(stri_endswith_fixed(odkNames, "id10200"))
     indexDatad <- which(stri_endswith_fixed(odkNames, whoNames[128]))
     indexDatam <- which(stri_endswith_fixed(odkNames, "id10202"))
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     128] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 128] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     128] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 128] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              128] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="no",                                                       128] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     128] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 128] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     128] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 128] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              128] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="no",                                                       128] <- "n"
 
     #129) Did (s)he have a more than usually protruding abdomen for at least 2 weeks before death? abd pr 2+w
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              129] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     129] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 129] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     129] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 129] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="no",                                                       129] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              129] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     129] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 129] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     129] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 129] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="no",                                                       129] <- "n"
 
     #130) Did (s)he develop the protruding abdomen rapidly? abd pr rap
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[130]))
-    iv5Out[tolower(odk[ , indexData])=="rapidly", 130] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="slowly",  130] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="rapidly", 130] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="slowly",  130] <- "n"
 
     #132) Did (s)he have a mass in the abdomen for less than 2 weeks before death? ab ms <2w
     indexData  <- which(stri_endswith_fixed(odkNames, "id10204"))
     indexDatad <- which(stri_endswith_fixed(odkNames, whoNames[132]))
     indexDatam <- which(stri_endswith_fixed(odkNames, "id10206"))
 
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     132] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 132] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     132] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 132] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              132] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="no",                                                       132] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     132] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 132] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     132] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 132] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              132] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="no",                                                       132] <- "n"
 
     #133) Did (s)he have a mass in the abdomen for at least 2 weeks before death? ab ms 2+w
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     133] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 133] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     133] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 133] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              133] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="no",                                                       133] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & odk[ , indexDatam]==0,     133] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 14 & is.na(odk[ , indexDatam]), 133] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & odk[ , indexDatam]==0,     133] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=14 & is.na(odk[ , indexDatam]), 133] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatam]>=1,                              133] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="no",                                                       133] <- "n"
 
     #136) Did (s)he have a stiff neck for less than one week before death? st n <1w
     indexDatad <- which(stri_endswith_fixed(odkNames, whoNames[136]))
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 7, 136] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=7, 136] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="no",                          136] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 7, 136] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=7, 136] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="no",                          136] <- "n"
 
     #137) Did (s)he have a stiff neck for at least one week before death? st n 1+w
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=7, 137] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 7, 137] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="no",                          137] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=7, 137] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 7, 137] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="no",                          137] <- "n"
 
     #139) Did (s)he have a painful neck for at least one week before death? pa n 1+w
     indexDatad <- which(stri_endswith_fixed(odkNames, whoNames[139]))
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=7, 139] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 7, 139] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="no",                          139] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]>=7, 139] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="yes" & odk[ , indexDatad]< 7, 139] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="no",                          139] <- "n"
+
+    #141) Did (s)he have mental confusion for at least 3 months before death? menc 3+m
+    indexDatad <- which(stri_endswith_fixed(odkNames, whoNames[141]))
+    iv5Out[odk[ , indexDatad]>=3, 141] <- "y"
+    iv5Out[odk[ , indexDatad]< 3, 141] <- "n"
 
     #144) Was (s)he unsconscious for at least 6 hours before death?	unc 6+h
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[144]))
-    iv5Out[odk[ , indexData]>=6, 144] <- "Y"
-    iv5Out[odk[ , indexData]< 6, 144] <- "N"
+    iv5Out[odk[ , indexData]>=6, 144] <- "y"
+    iv5Out[odk[ , indexData]< 6, 144] <- "n"
 
     #149) Did the convulsions last for less than 10 minutes?	conv <10m
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[149]))
-    iv5Out[odk[ , indexData]< 10, 149] <- "Y"
-    iv5Out[odk[ , indexData]>=10, 149] <- "N"
+    iv5Out[odk[ , indexData]< 10, 149] <- "y"
+    iv5Out[odk[ , indexData]>=10, 149] <- "n"
 
     #150) Did the convulsions last for at least 10 minutes?	conv 10+m
-    iv5Out[odk[ , indexData]< 10, 150] <- "N"
-    iv5Out[odk[ , indexData]>=10, 150] <- "Y"
+    iv5Out[odk[ , indexData]< 10, 150] <- "n"
+    iv5Out[odk[ , indexData]>=10, 150] <- "y"
 
     #161) Did the ulcer ooze pus for at least 2 weeks?	sk ul 2+w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[161]))
-    iv5Out[odk[ , indexData]>=14, 161] <- "Y"
-    iv5Out[odk[ , indexData]< 14, 161] <- "N"
+    iv5Out[odk[ , indexData]>=14, 161] <- "y"
+    iv5Out[odk[ , indexData]< 14, 161] <- "n"
 
     #163) Did (s)he have the skin rash for less than one week?	sk ra <1w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[163]))
-    iv5Out[odk[ , indexData]< 7, 163] <- "Y"
-    iv5Out[odk[ , indexData]>=7, 163] <- "N"
+    iv5Out[odk[ , indexData]< 7, 163] <- "y"
+    iv5Out[odk[ , indexData]>=7, 163] <- "n"
 
     #164) Did (s)he have the skin rash for at least one week?	sk ra 1+w
-    iv5Out[odk[ , indexData]>=7, 164] <- "Y"
-    iv5Out[odk[ , indexData]< 7, 164] <- "N"
+    iv5Out[odk[ , indexData]>=7, 164] <- "y"
+    iv5Out[odk[ , indexData]< 7, 164] <- "n"
 
     #165) Did (s)he have a rash on the face?	sk ra face
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[165]))
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "face"),                165] <- "Y"
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "face"), 165] <- "N"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "face"),                165] <- "y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "face"), 165] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                                       165] <- "."
 
     #166) Did (s)he have a rash on the trunk or abdomen?	sk ra abd
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[166]))
-    iv5Out[stri_detect_regex(tolower(odk[ , indexData]), "abdomen|trunk"),                166] <- "Y"
-    iv5Out[stri_detect_regex(tolower(odk[ , indexData]), negate = TRUE, "abdomen|trunk"), 166] <- "N"
+    iv5Out[stri_detect_regex(tolower(odk[ , indexData]), "abdomen|trunk"),                166] <- "y"
+    iv5Out[stri_detect_regex(tolower(odk[ , indexData]), negate = TRUE, "abdomen|trunk"), 166] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                                                166] <- "."
 
     #167) Did (s)he have a rash on the extremities?	sk ra ext
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[167]))
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "extremities"),                167] <- "Y"
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "extremities"), 167] <- "N"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "extremities"),                167] <- "y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "extremities"), 167] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                                              167] <- "."
 
     #168) Did (s)he have a rash everywhere?	sk ra all
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[168]))
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "everywhere"),                168] <- "Y"
-    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "everywhere"), 168] <- "N"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "everywhere"),                168] <- "y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "everywhere"), 168] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                                             168] <- "."
 
     #181) Did (s)he have puffiness of the face for at least one week before death?	sw p f 1+w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[181]))
-    iv5Out[odk[ , indexData]>=7, 181] <- "Y"
-    iv5Out[odk[ , indexData]< 7, 181] <- "N"
+    iv5Out[odk[ , indexData]>=7, 181] <- "y"
+    iv5Out[odk[ , indexData]< 7, 181] <- "n"
 
     #183) Did the swelling last for at least 3 days before death?	sw lf 3+d
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[183]))
-    iv5Out[odk[ , indexData]>=3, 183] <- "Y"
-    iv5Out[odk[ , indexData]< 3, 183] <- "N"
+    iv5Out[odk[ , indexData]>=3, 183] <- "y"
+    iv5Out[odk[ , indexData]< 3, 183] <- "n"
 
     #193) Was only the right side of the body paralysed?	par rs
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[193]))
-    iv5Out[tolower(odk[ , indexData])=="right_side", 193] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="right_side", 193] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="right_side", 193] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="right_side", 193] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",           193] <- "."
 
     #194) Was only the left side of the body paralysed?	par ls
-    iv5Out[tolower(odk[ , indexData])=="left_side", 194] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="left_side", 194] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="left_side", 194] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="left_side", 194] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",          194] <- "."
 
     #195) Was only the lower part of the body paralysed?	par lo
-    iv5Out[tolower(odk[ , indexData])=="lower_part_of_body", 195] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="lower_part_of_body", 195] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="lower_part_of_body", 195] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="lower_part_of_body", 195] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                   195] <- "."
 
     #196) Was only the upper part of the body paralysed?	par up
-    iv5Out[tolower(odk[ , indexData])=="upper_part_of_body", 196] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="upper_part_of_body", 196] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="upper_part_of_body", 196] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="upper_part_of_body", 196] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                   196] <- "."
 
     #197) Was only one leg paralysed?	par leg
-    iv5Out[tolower(odk[ , indexData])=="one_leg_only", 197] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="one_leg_only", 197] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="one_leg_only", 197] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="one_leg_only", 197] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",             197] <- "."
 
     #198) Was only one arm paralysed?	par arm
-    iv5Out[tolower(odk[ , indexData])=="one_arm_only", 198] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="one_arm_only", 198] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="one_arm_only", 198] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="one_arm_only", 198] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",             198] <- "."
 
     #199) Was the entire body paralysed?	par all
-    iv5Out[tolower(odk[ , indexData])=="whole_body", 199] <- "Y"
-    iv5Out[tolower(odk[ , indexData])!="whole_body", 199] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="whole_body", 199] <- "y"
+    iv5Out[tolower(odk[ , indexData])!="whole_body", 199] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",           199] <- "."
 
     #201) Did (s)he have difficulty swallowing for at least one week before death?	swa 1+w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[201]))
-    iv5Out[odk[ , indexData]>=7, 201] <- "Y"
-    iv5Out[odk[ , indexData]< 7, 201] <- "N"
+    iv5Out[odk[ , indexData]>=7, 201] <- "y"
+    iv5Out[odk[ , indexData]< 7, 201] <- "n"
 
     #202) Did (s)he have difficulty with swallowing solids?	swa sol
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[202]))
-    iv5Out[tolower(odk[ , indexData])=="solids",  202] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="both",    202] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="liquids", 202] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="solids",  202] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="both",    202] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="liquids", 202] <- "n"
 
     #203) Did (s)he have difficulty with swallowing liquids?	swa liq
-    iv5Out[tolower(odk[ , indexData])=="solids",  203] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="both",    203] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="liquids", 203] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="solids",  203] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="both",    203] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="liquids", 203] <- "y"
 
     #206) Did (s)he have the yellow discolouration for at least 3 weeks before death?	yell 3+w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[206]))
-    iv5Out[odk[ , indexData]>=21, 206] <- "Y"
-    iv5Out[odk[ , indexData]< 21, 206] <- "N"
+    iv5Out[odk[ , indexData]>=21, 206] <- "y"
+    iv5Out[odk[ , indexData]< 21, 206] <- "n"
 
     #214) Did the baby stop suckling on the 2nd day of life or later?	suck st d1
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[214]))
-    iv5Out[odk[ , indexData[1]]>=2, 214] <-  "Y"
-    iv5Out[odk[ , indexData[1]]< 2, 214] <-  "N"
+    iv5Out[odk[ , indexData[1]]>=2, 214] <-  "y"
+    iv5Out[odk[ , indexData[1]]< 2, 214] <-  "n"
 
     #224) Was the baby more than 3 days old when it started feeling cold to touch?	cold 3+d
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[224]))
-    iv5Out[odk[ , indexData]> 3, 224] <- "Y"
-    iv5Out[odk[ , indexData]<=3, 224] <- "N"
+    iv5Out[odk[ , indexData]> 3, 224] <- "y"
+    iv5Out[odk[ , indexData]<=3, 224] <- "n"
 
     #239) Had her period been overdue for at least 4 weeks?	men l 4+w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[239]))
-    iv5Out[odk[ , indexData]>=4, 239] <- "Y"
-    iv5Out[odk[ , indexData]< 4, 239] <- "N"
+    iv5Out[odk[ , indexData]>=4, 239] <- "y"
+    iv5Out[odk[ , indexData]< 4, 239] <- "n"
+
+    #243) Was she, or had she been, pregnant for less than 6 months when she died?	d <6m pr
+    indexData <- which(stri_endswith_fixed(odkNames, whoNames[243]))
+    iv5Out[odk[ , indexData]< 6, 243] <- "y"
+    iv5Out[odk[ , indexData]>=6, 243] <- "n"
 
     #252) Did she die during or after her first pregnancy?	1st pr.
     #     WHO question is "How many births, including stillbirths, did she/the mother have before this baby?"
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[252]))
-    iv5Out[odk[ , indexData]==0, 252] <-  "Y"
-    iv5Out[odk[ , indexData]> 0, 252] <-  "N"
+    iv5Out[odk[ , indexData]==0, 252] <-  "y"
+    iv5Out[odk[ , indexData]> 0, 252] <-  "n"
 
     #253) Did she have four or more pregnancies before this one?	4+ pr
-    iv5Out[odk[ , indexData]>=4, 253] <- "Y"
-    iv5Out[odk[ , indexData]< 4, 253] <- "N"
+    iv5Out[odk[ , indexData]>=4, 253] <- "y"
+    iv5Out[odk[ , indexData]< 4, 253] <- "n"
 
     #266) Did her labour last longer than 24 hours?	lab 24+h
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[266]))
-    iv5Out[odk[ , indexData]> 24, 266] <- "Y"
-    iv5Out[odk[ , indexData]<=24, 266] <- "N"
+    iv5Out[odk[ , indexData]> 24, 266] <- "y"
+    iv5Out[odk[ , indexData]<=24, 266] <- "n"
 
     #271) Did the mother deliver at a health facility or clinic?	del hfac
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[271]))
-    iv5Out[tolower(odk[ , indexData])=="hospital",                         271] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            271] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="home",                             271] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 271] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other",                            271] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="hospital",                         271] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            271] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="home",                             271] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 271] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other",                            271] <- "n"
 
     #272) Did the mother deliver at home?	del home
-    iv5Out[tolower(odk[ , indexData])=="hospital",                         272] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            272] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="home",                             272] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 272] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other",                            272] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="hospital",                         272] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            272] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="home",                             272] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 272] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other",                            272] <- "n"
 
     #273) Did the mother deliver elsewhere (not at a health facility nor at home)?	del else
-    iv5Out[tolower(odk[ , indexData])=="hospital",                         273] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            273] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="home",                             273] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 273] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="other",                            273] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="hospital",                         273] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            273] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="home",                             273] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 273] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="other",                            273] <- "y"
 
     #281) If the child was part of a multiple birth, was it born first?	mult fir
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[281]))
-    iv5Out[tolower(odk[ , indexData])=="first",           281] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="second_or_later", 281] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="first",           281] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="second_or_later", 281] <- "n"
 
     #283) Did the child's mother die during or shortly after the delivery?	moth d del
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[283]))
-    iv5Out[tolower(odk[ , indexData])=="after_delivery",   283] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="during_delivery" , 283] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="after_delivery",   283] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="during_delivery" , 283] <- "y"
 
     #284) Did the child's mother die in the baby's first year of life?	moth d y1
     indexDatam <- which(stri_endswith_fixed(odkNames, whoNames[284]))
@@ -711,77 +744,77 @@ odk2openVA_v151 <- function(odk){
     nDays   <- odk[ , indexDatad]
     nMonths[is.na(nMonths) & !is.na(nDays)] <- 0
     nDays[is.na(nDays) & !is.na(nMonths)] <- 0
-    iv5Out[nMonths + nDays/30.4 <=12, 284] <- "Y"
-    iv5Out[nMonths + nDays/30.4 > 12, 284] <- "N"
+    iv5Out[nMonths + nDays/30.4 <=12, 284] <- "y"
+    iv5Out[nMonths + nDays/30.4 > 12, 284] <- "n"
 
     #285) Was the baby born in a health facility or clinic?	born fac
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[285]))
-    iv5Out[tolower(odk[ , indexData])=="hospital",                         285] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            285] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="home",                             285] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other",                            285] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 285] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="hospital",                         285] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            285] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="home",                             285] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other",                            285] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 285] <- "n"
 
     #286) Was the baby born at home?	born home
-    iv5Out[tolower(odk[ , indexData])=="hospital",                         286] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            286] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="home",                             286] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="other",                            286] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 286] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="hospital",                         286] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            286] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="home",                             286] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="other",                            286] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 286] <- "n"
 
     #287) Was the baby born somewhere else (e.g. on the way to a clinic)?	born on way
-    iv5Out[tolower(odk[ , indexData])=="hospital",                         287] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            287] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="home",                             287] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other",                            287] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 287] <- "Y"
+    iv5Out[tolower(odk[ , indexData])=="hospital",                         287] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other_health_facility",            287] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="home",                             287] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other",                            287] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="on_route_to_hospital_or_facility", 287] <- "y"
 
     #293) Was the baby born during the ninth month (at least 37 weeks) of pregnancy?	gest 9m
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[293]))
-    iv5Out[odk[ , indexData]>=9 & odk[ , indexData]< 88, 293] <- "Y"
-    iv5Out[odk[ , indexData]< 9,                         293] <- "N"
+    iv5Out[odk[ , indexData]>=9 & odk[ , indexData]< 88, 293] <- "y"
+    iv5Out[odk[ , indexData]< 9,                         293] <- "n"
 
     #294) Was the baby born during the eighth month (34 to 37 weeks) of pregnancy?	gest 8m
-    iv5Out[odk[ , indexData]> 8 & odk[ , indexData]< 88, 294] <- "N"
-    iv5Out[odk[ , indexData]==8,                         294] <- "Y"
-    iv5Out[odk[ , indexData]< 8,                         294] <- "N"
+    iv5Out[odk[ , indexData]> 8 & odk[ , indexData]< 88, 294] <- "n"
+    iv5Out[odk[ , indexData]==8,                         294] <- "y"
+    iv5Out[odk[ , indexData]< 8,                         294] <- "n"
 
     #295) Was the baby born before the eighth month (less than 34 weeks) of pregnancy?	gest 7m
-    iv5Out[odk[ , indexData]>=8 & odk[ , indexData]< 88, 295] <- "N"
-    iv5Out[odk[ , indexData]< 8                         , 295] <- "Y"
+    iv5Out[odk[ , indexData]>=8 & odk[ , indexData]< 88, 295] <- "n"
+    iv5Out[odk[ , indexData]< 8                         , 295] <- "y"
 
     #304) Did labour and delivery take more than 24 hours?	lab 24+h
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[304]))
-    iv5Out[odk[ , indexData]> 24, 304] <- "Y"
-    iv5Out[odk[ , indexData]<=24, 304] <- "N"
+    iv5Out[odk[ , indexData]> 24, 304] <- "y"
+    iv5Out[odk[ , indexData]<=24, 304] <- "n"
 
     #307) Was the liquor a green or brown colour when the waters broke?	liq gr-br
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[307]))
-    iv5Out[tolower(odk[ , indexData])=="green_or_brown", 307] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="clear",          307] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other",          307] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="green_or_brown", 307] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="clear",          307] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other",          307] <- "n"
 
     #313) Was this baby born from the mother's first pregnancy?	born 1st pr
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[313]))
-    iv5Out[odk[ , indexData]==0, 313] <- "Y"
-    iv5Out[odk[ , indexData]> 0, 313] <- "N"
+    iv5Out[odk[ , indexData]==0, 313] <- "y"
+    iv5Out[odk[ , indexData]> 0, 313] <- "n"
 
     #314) Did the baby's mother have four or more births before this one?	born 4+ pr
-    iv5Out[odk[ , indexData]>=4, 314] <- "Y"
-    iv5Out[odk[ , indexData]< 4, 314] <- "N"
+    iv5Out[odk[ , indexData]>=4, 314] <- "y"
+    iv5Out[odk[ , indexData]< 4, 314] <- "n"
 
     #331) Did (s)he use non-smoking tobacco?	tobac ns
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[331]))
-    iv5Out[tolower(odk[ , indexData])=="chewing_tobacco",       331] <- "Y"
-    iv5Out[tolower(odk[ , indexData])=="cigarettes",            331] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="pipe",                  331] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="local_form_of_tobacco", 331] <- "N"
-    iv5Out[tolower(odk[ , indexData])=="other",                 331] <- "N"
+    iv5Out[tolower(odk[ , indexData])=="chewing_tobacco",       331] <- "y"
+    iv5Out[tolower(odk[ , indexData])=="cigarettes",            331] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="pipe",                  331] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="local_form_of_tobacco", 331] <- "n"
+    iv5Out[tolower(odk[ , indexData])=="other",                 331] <- "n"
 
     #332) Did (s)he smoke at least 10 cigarettes daily?	cigs >10
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[332]))
-    iv5Out[odk[ , indexData]>=10, 332] <- "Y"
-    iv5Out[odk[ , indexData]< 10, 332] <- "N"
+    iv5Out[odk[ , indexData]>=10, 332] <- "y"
+    iv5Out[odk[ , indexData]< 10, 332] <- "n"
 
     # Add IDD as first column
     iv5Out <- cbind(as.character(odk$meta.instanceID), iv5Out)

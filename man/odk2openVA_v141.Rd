@@ -17,9 +17,9 @@ export of records collected with the WHO questionnaire.}
 }
 \examples{
 \dontrun{
-record_f_name <- system.file("sample", "who_va_output.csv", package = "CrossVA")
-records <- read.csv(record_f_name)
-output_data_IV5 <- odk2openVA_v141(records)
+record_f_name <- system.file("sample", "who141_odk_export.csv", package = "CrossVA")
+records <- read.csv(record_f_name, stringsAsFactors = FALSE)
+output <- odk2openVA_v141(records)
 }
 
 }

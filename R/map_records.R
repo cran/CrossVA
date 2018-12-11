@@ -15,6 +15,7 @@ xda_env <- new.env()
 #'
 #' @examples
 #'
+#' \dontrun{
 #' record_f_name <- system.file('sample', 'who_va_output.csv', package = 'CrossVA')
 #' records <- read.csv(record_f_name)
 #' output_data <- map_records(records, 'insilicova')
@@ -38,6 +39,7 @@ xda_env <- new.env()
 #' qmethod = "escape",
 #' sep = ","
 #' )
+#'}
 #'
 #' @export
 #'
