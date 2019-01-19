@@ -4,33 +4,30 @@
 \alias{odk2openVA}
 \title{Map VA records to InterVA5 & InSilico (with option data.type = "WHO2016").}
 \usage{
-odk2openVA(odk, version = c("1.5.1", "1.4.1")[1])
+odk2openVA(odk)
 }
 \arguments{
 \item{odk}{A dataframe, obtained from reading an ODK Briefcase
 export of records collected with the WHO questionnaire.}
-
-\item{version}{A string equal to "1.5.1" (default) or "1.4.1" which
-indicates the version of the 2016 WHO VA instrument used to collect the
-data.}
 }
 \description{
 \code{odk2openVA} transforms data collected with the 2016 WHO VA instrument
   into a format that can be used with the InterVA5 and InSilicoVA alogrithms
   for coding cause of death. It is a wrapper for functions that handle
   specific versions of the 2016 WHO VA instrument --  namely, 1.4.1 and 1.5.1.
+  If the input (odk) includes a column containing the string:
+  "age_neonate_hours", then the function assumes the questionnaire version is
+  1.4.1 (and assumes version 1.5.1 if the string is not located).
 }
 \examples{
-\dontrun{
 ## Example with 2016 WHO VA instrument version 1.5.1
 record_f_name151 <- system.file("sample", "who151_odk_export.csv", package = "CrossVA")
 records151 <- read.csv(record_f_name151, stringsAsFactors = FALSE)
-output151 <- odk2openVA(records151, version = "1.5.1")
+output151 <- odk2openVA(records151)
 
 ## Example with 2016 WHO VA instrument version 1.4.1
 record_f_name141 <- system.file("sample", "who141_odk_export.csv", package = "CrossVA")
 records141 <- read.csv(record_f_name141, stringsAsFactors = FALSE)
-output141 <- odk2openVA(records, version = "1.4.1")
-}
+output141 <- odk2openVA(records141)
 
 }

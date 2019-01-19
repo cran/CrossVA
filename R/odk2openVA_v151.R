@@ -128,14 +128,13 @@ odk2openVA_v151 <- function(odk){
     indexData <- apply(tmpMat, 2, which)
     warnZeroMatch <- which(sapply(indexData, length) == 0)
     if (length(warnZeroMatch) > 0) {
-        warning("Problem with data", call. = FALSE)
         cat(
             paste("Expecting indicator(s) with name(s): ",
                   whoNames[warnZeroMatch],
                   sep = ""),
             sep = "\n"
         )
-        stop("Please add above columns to your data frame")
+        stop("Problem with data: please add above columns to your data frame")
     }
 
     ## function for creating simple Y/N indicators
@@ -176,7 +175,6 @@ odk2openVA_v151 <- function(odk){
 
     #3) Was he male? male & ##4) Was he female? female
     indexData_sex <- which(stri_endswith_fixed(odkNames, whoNames[3]))
-    ## table(odk[ , indexData_sex])
     iv5Out[tolower(odk[ , indexData_sex])=="male",   3] <- "y" ## male
     iv5Out[tolower(odk[ , indexData_sex])=="female", 3] <- "n"
 
@@ -184,7 +182,7 @@ odk2openVA_v151 <- function(odk){
     iv5Out[tolower(odk[ , indexData_sex])=="female", 4] <- "y"
 
     # age
-    indexData1y <- which(stri_detect_regex(odkNames, "ageinyears$"))   ## exclude ageInXXXXRemain
+    indexData1y <- which(stri_detect_regex(odkNames, "ageinyears2"))
     indexData1m <- which(stri_detect_regex(odkNames, "ageinmonths$"))
     indexData1d <- which(stri_detect_regex(odkNames, "ageindays$"))
 
@@ -201,9 +199,16 @@ odk2openVA_v151 <- function(odk){
     ## indexData5h <- which(stri_detect_regex(odkNames, "age_neonate_hours"))
     ## indexData5m <- which(stri_detect_regex(odkNames, "age_neonate_minutes"))
 
+    indexData_isNeonatal <- which(stri_detect_regex(odkNames, "isneonatal$"))
+    indexData_isChild <- which(stri_detect_regex(odkNames, "ischild$"))
+    indexData_isAdult <- which(stri_detect_regex(odkNames, "isadult$"))
+
     #5) Was s(he) aged 65 years or more at death? 65+
     iv5Out[odk[ , indexData1y]>=65, 5] <- "y"
     iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]>=65, 5] <- "y"
+    checkNumeric <- tryCatch(as.numeric(odk[ , indexData1y]),
+                             warning = function(w) return(-9999))
+    if(sum(checkNumeric, na.rm = TRUE) < 0) iv5Out[, 5] <- NA
 
     #6) Was s(he) aged 50 to 64 years at death? 50 to 64
     iv5Out[odk[ , indexData1y]< 65 & odk[ , indexData1y]>=50, 6] <- "y"
@@ -241,35 +246,51 @@ odk2openVA_v151 <- function(odk){
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 1    , 12] <- "y"
 
     #13) Was s(he) a baby who died between 24 and 48 hours of birth? day1 iv5Names[13]
+    iv5Out[odk[ , indexData1d]>=1 & odk[ , indexData1d]<=2, 13] <- "y"
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 2 & ageNeonate>=1, 13] <- "y"
 
     #14)  Was s(he) a baby who died more than 48 hours from birth, but within the first week? day2-6 iv5Names[14]
+    iv5Out[odk[ , indexData1d]>2 & odk[ , indexData1d]< 7, 13] <- "y"
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 7 & ageNeonate>=2, 14] <- "y"
 
     #15) Was s(he) a baby who died after the first week, but within the first month? wk2-4 iv5Names[15]
+    iv5Out[odk[ , indexData1d]>=7 & odk[ , indexData1d]< 28, 13] <- "y"
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 28 & ageNeonate>=7, 15] <- "y"
 
-    # Finish coding age (5-15) -- if only only one age has "y", recode all others to "n"
+    # Finish coding age (5-15) -- if only one age has "y", recode all others to "n"
     ## e.g., if age 65 == "y", then age 50-64 == "n" and age 15-49 == "n" etc.
     indexData6 <-iv5Out[ , 5:15] != "y"            ## identify elements in age columns that do not equal "y"
-    indexData7 <- rowSums(iv5Out[ , 5:15] == "y")  ## identify with rows/records only have 1 "y" for all age columns
+    ##indexData7 <- rowSums(iv5Out[ , 5:15] == "y")  ## identify with rows/records only have 1 "y" for all age columns
+    indexData7 <- rowSums(iv5Out[ , 5:15] == "y", na.rm = TRUE)
     ## Now recode all "n"
     iv5Out[indexData7 == 1, 5:15][ indexData6[indexData7 == 1, ] ] <- "n"
 
     #16) Was she a woman aged 12-19 years at death? f-19
-    iv5Out[ , 16] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 19 & odk[ , indexData1y]>= 12, "y", ".")
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 19 & odk[ , indexData3]>=12, 16] <- "y"
-    iv5Out[odk[ , indexData2]=="neonate", 16] <- "n"
+    iv5Out[ , 16] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 20 & odk[ , indexData1y]>= 12, "y", ".")
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 20 & odk[ , indexData3]>=12, 16] <- "y"
+    iv5Out[odk[ , indexData_isNeonatal] == 1, 16] <- "n"
+    iv5Out[odk[ , indexData_isChild] == 1, 16] <- "n"
+    iv5Out[odk[ , indexData_sex]=="male", 16] <- "n"
+    iv5Out[odk[ , indexData1y] < 12, 16] <- "n"
+    iv5Out[odk[ , indexData1y] > 19, 16] <- "n"
 
     #17) Was she a woman aged 20-34 years at death? f20-34
     iv5Out[ , 17] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 35 & odk[ , indexData1y]>= 20, "y", ".")
     iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 35 & odk[ , indexData3]>=20, 17] <- "y"
-    iv5Out[odk[ , indexData2]=="neonate", 17] <- "n"
+    iv5Out[odk[ , indexData_isNeonatal] == 1, 17] <- "n"
+    iv5Out[odk[ , indexData_isChild] == 1, 17] <- "n"
+    iv5Out[odk[ , indexData_sex]=="male", 17] <- "n"
+    iv5Out[odk[ , indexData1y] < 20, 17] <- "n"
+    iv5Out[odk[ , indexData1y] > 34, 17] <- "n"
 
     #18) Was she a woman aged 35 to 49 years at death? f35-49
     iv5Out[ , 18] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 50 & odk[ , indexData1y]>= 35, "y", ".")
     iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=35, 18] <- "y"
-    iv5Out[odk[ , indexData2]=="neonate", 18] <- "n"
+    iv5Out[odk[ , indexData_isNeonatal] == 1, 18] <- "n"
+    iv5Out[odk[ , indexData_isChild] == 1, 18] <- "n"
+    iv5Out[odk[ , indexData_sex]=="male", 18] <- "n"
+    iv5Out[odk[ , indexData1y] < 35, 18] <- "n"
+    iv5Out[odk[ , indexData1y] > 49, 18] <- "n"
 
     #19) Was she married at the time of death? married
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[19]))
@@ -583,7 +604,7 @@ odk2openVA_v151 <- function(odk){
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[165]))
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "face"),                165] <- "y"
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "face"), 165] <- "n"
-    iv5Out[tolower(odk[ , indexData])=="",                                       165] <- "."
+    iv5Out[tolower(odk[ , indexData])=="",                                         165] <- "."
 
     #166) Did (s)he have a rash on the trunk or abdomen?	sk ra abd
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[166]))
@@ -595,7 +616,7 @@ odk2openVA_v151 <- function(odk){
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[167]))
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "extremities"),                167] <- "y"
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "extremities"), 167] <- "n"
-    iv5Out[tolower(odk[ , indexData])=="",                                              167] <- "."
+    iv5Out[tolower(odk[ , indexData])=="",                                                167] <- "."
 
     #168) Did (s)he have a rash everywhere?	sk ra all
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[168]))
@@ -816,11 +837,32 @@ odk2openVA_v151 <- function(odk){
     iv5Out[odk[ , indexData]>=10, 332] <- "y"
     iv5Out[odk[ , indexData]< 10, 332] <- "n"
 
+    # check for NAs
+    numNA <- colSums(is.na(iv5Out))
+    indexNA <- which(numNA > 0)
+    if (length(indexNA) > 0) {
+        warning("NA's included in output", call. = FALSE)
+        cat(
+            paste("odk2openVA produced NA's in the following columns",
+                  " (this may cause errors with openVA)",
+                  sep = ""),
+            sep = "\n"
+            )
+        cat(
+            paste(iv5Names[indexNA], ## subtract 1 since ID is omitted
+                  " Probably associated with WHO column containing: ",
+                  whoNames[indexNA], ## subtract 1 since ID is omitted
+                  sep = ""),
+            sep = "\n"
+        )
+    }
+
     # Add IDD as first column
     iv5Out <- cbind(as.character(odk$meta.instanceID), iv5Out)
 
     # Attach column names
     colnames(iv5Out) <- c("ID", iv5Names)
 
-    return(as.data.frame(iv5Out))
+    # That's all folks!
+    return(as.data.frame(iv5Out, stringsAsFactors = FALSE))
 }

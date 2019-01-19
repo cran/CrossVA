@@ -30,7 +30,7 @@ A CSV file intended for processing by a coding algorithm.
 
 **Status**		
 
-Initial, not intended for production use
+Actively maintained.
 
 **Testing**
 

@@ -74,7 +74,9 @@ Briefcase -- this is used below with the example data file who151_va_output.csv.
 ## Analysis of 2016 WHO Verbal Autopsy Instrument
 
 Again, CrossVA currently supports version 1.5.1 and 1.4.1 of the 2016 WHO VA
-questionnaire.
+questionnaire. If the input data frame (from odk) includes a column containing 
+the string: "age_neonate_hours", then the function assumes the questionnaire 
+version is 1.4.1 (and assumes version 1.5.1 if the string is not located).
 
 ### Questionnaire version 1.5.1
 
@@ -108,7 +110,7 @@ with 354 columns).
 ```{r runCrossVA}
 # Convert VAs using the odk2openVA() function
 ## we will be able to use either InterVA5 or insilico(data.type = "WHO2016") to assign CoD
-openva_input_v151 <- odk2openVA(odkexport_v151, version = "1.5.1")
+openva_input_v151 <- odk2openVA(odkexport_v151)
 
 # For 2016 WHO VA instrument, the output needs to have 354 columns (1 ID + 353 symptoms)
 dim(openva_input_v151)
@@ -190,9 +192,16 @@ plotVA(run2)
 fileName_v141 <- system.file("sample", "who141_odk_export.csv", package = "CrossVA")
 odkexport_v141 <- read.csv(fileName_v141, stringsAsFactors = FALSE)
 
+## Since odkexport has a column name that includes "age_neonate_hours"
+## odk2openVA will assume the questionnaire version is 1.4.1
+col_age_neonate_hours <- grep("age_neonate_hours",
+                              tolower(names(odkexport_v141)))
+col_age_neonate_hours
+names(odkexport_v141)[col_age_neonate_hours]
+
 # Convert VAs using the odk2openVA() function for version 1.4.1
 ## we will be able to use either InterVA5 or insilico(data.type = "WHO2016") to assign CoD
-openva_input_v141 <- odk2openVA(odkexport_v141, version = "1.4.1")
+openva_input_v141 <- odk2openVA(odkexport_v141)
 dim(openva_input_v141)
 
 # Assign CoD with model = InterVA5 and codeVA

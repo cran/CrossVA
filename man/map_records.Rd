@@ -26,6 +26,7 @@ A dataframe, with the VA records mapped to the variables required
 }
 \examples{
 
+\dontrun{
 record_f_name <- system.file('sample', 'who_va_output.csv', package = 'CrossVA')
 records <- read.csv(record_f_name)
 output_data <- map_records(records, 'insilicova')
@@ -49,5 +50,6 @@ na = "",
 qmethod = "escape",
 sep = ","
 )
+}
 
 }
