@@ -14,6 +14,10 @@
 #' output <- odk2openVA_v151(records)
 #' }
 #'
+#' @importFrom stringi stri_detect_fixed
+#' @importFrom stringi stri_detect_regex 
+#' @importFrom stringi stri_endswith_fixed
+#' 
 #' @export
 #'
 odk2openVA_v151 <- function(odk){

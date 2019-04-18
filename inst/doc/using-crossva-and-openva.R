@@ -34,7 +34,7 @@ library(openVA)
 #  #> [1] "C:/Users/LeoMessi/R/win-library/3.5/CrossVA/sample/who151_va_output.csv"
 #  
 #  dir("C:/Users/LeoMessi/R/win-library/3.5/CrossVA/sample/")
-#  #> [1] "who151_odk_export.csv"    "who141_odk_export.csv"    "who_va_output.csv"
+#  #> [1] "who151_odk_export.csv"    "who141_odk_export.csv"    "who2014_odk_export.csv"
 #  
 #  # Use the read.csv() function to load the data
 #  odkexport_v151 <- read.csv(fileName_v151, stringsAsFactors = FALSE)

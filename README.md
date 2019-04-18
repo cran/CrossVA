@@ -2,35 +2,27 @@
 
 **Description** 	
 
-CrossVA is an R package for transforming verbal autopsy records collected using
-the WHO VA 2016 instrument (Revision 1.4.1 or 1.5.1) to be used as input for
-different coding algorithms. Currently supports user-supplied mappings, and
-provides unvalidated mapping definitions to transform to InterVA4, Tariff 2,
-and InSilicoVA. This package is made available by WHO, in collaboration with
-Swiss Tropical and Public Health Institute. Craig Hales from CDC reviewed and
-commented on earlier version of the mapping definitions.
-
+CrossVA is an R package for transforming verbal autopsy records into a format
+accepted by the InSilicoVA and InterVA5 R packages.  Verbal autopsy records
+are expected to be collected using the WHO VA 2016 instrument (Revision 1.4.1 
+or 1.5.1) or the WHO VA 2014 instrument. This package is made available by WHO 
+and the Bloomberg Data for Health Initiative.
 
 **Input**		
 - CSV file containing submissions of the 2016 WHO VA questionnaire (Revision
-  1.4.1 or 1.5.1, exported from ODK Aggregate using ODK Briefcase)
-- A mapping files (tab-delimited text file). Minimal content: the first columns
-  contains the names of all indicators needed by the coding algorithm (called
-  "target indicators" here). The second column contains the mapping to each
-  target indicators, as a valid R expression: expressions can be functions of
-  zero or more variables of the WHO VA instrument, or any of the preceding
-  target indicators. In addition to standard R functions, a small set of
-  convenience functions which is provided in utils.R can be called to achieve
-  the mapping. The release comes with currently two mapping files, one for
-  interVA4, and one for tariff2).
+  1.4.1 or 1.5.1), exported from ODK Aggregate 
+- CSV file containing submissions of the 2014 WHO VA questionnaire (2-15-10
+  with form id: va-who_2014_final10), exported from ODK Aggregate
 
 **Output**		
-A CSV file intended for processing by a coding algorithm.
-
+A CSV file intended for processing by a coding algorithm (i.e., InSilicoVA
+or InterVA)
 
 **Status**		
 
-Actively maintained.
+- `odk2openVA` is actively supported
+- Future support for the WHO VA 2012 questionnaire and the PHMRC questionnaire 
+will be available in a future release.
 
 **Testing**
 
@@ -42,35 +34,43 @@ devtools::install_github("verbal-autopsy-software/CrossVA/CrossVA")
 or download and install from [here https://github.com/verbal-autopsy-software/CrossVA/](https://github.com/verbal-autopsy-software/CrossVA)
 
 Use your own VA records, or one of the sythetic sample data sets included in the package for testing:
-(version 1.5.1)[https://github.com/verbal-autopsy-software/CrossVA/blob/master/CrossVA/inst/sample/who151_va_output.csv] and
-(version 1.4.1)[https://github.com/verbal-autopsy-software/CrossVA/blob/master/CrossVA/inst/sample/who_va_output.csv].
+(WHO VA 2016, version 1.5.1)[https://github.com/verbal-autopsy-software/CrossVA/blob/master/CrossVA/inst/sample/who151_odk_export.csv],
+(WHO VA 2016, version 1.4.1)[https://github.com/verbal-autopsy-software/CrossVA/blob/master/CrossVA/inst/sample/who141_odk_export.csv], or
+(WHO VA 2014)[https://github.com/verbal-autopsy-software/CrossVA/blob/master/CrossVA/inst/sample/who2014_odk_export.csv], or
 
-***Examples***
+**Examples**
 ```
 library(CrossVA)
 library(openVA)
-# InterVA4 & InSilicoVA(data.type = "WHO2012")
-record_f_name <- system.file("sample", "who_va_output.csv", package = "CrossVA")
-records <- read.csv(record_f_name)
 
-## map to interva4, use name of algorithm
-output_data <- map_records(records, "interva4")
-output_f_name <- "output_for_interva4.csv"
-write.table(output_data, output_f_name, row.names = FALSE, na = "", qmethod = "escape", sep = ",")
-InterVA(output_data, HIV = "l", Malaria = "l")
+# WHO VA Questionnaire 2016
+## version 151
+datafile_2016_151 <- system.file("sample", "who151_odk_export.csv", package = "CrossVA")
+records_2016_151 <- read.csv(datafile_2016_151)
+whoData2016_151 <- odk2openVA(records_2016_151, version = "1.5.1")
 
-## map by providing a mapping file (here using the package-provided tariff2 mapping)
-mapping_file <- system.file("mapping", "tariff2_mapping.txt", package = "CrossVA")
-output_data <- map_records(records, mapping_file)
-output_f_name <- "output_for_smartva.csv"
-write.table(output_data, output_f_name, row.names = FALSE, na = "", qmethod = "escape", sep = ",")
+out1 <- insilico(whoData2016_151, data.type = "WHO2016")
+summary(out1)
+out2 <- InterVA5(whoData2016_151, HIV = "l", Malaria = "l", directory = getwd())
+summary(out2)
 
-## convenience wrapper (here using the package-provided InsilicoVA mapping)
-output_data <- map_records_insilicova(records, "isoutput.csv")
-
-# InterVA5 & InSilicoVA(data.type = "WHO2012")
-whoData2016_151 <- odk2openVA(records, version = "1.5.1")
+## version 141
+datafile_2016_141 <- system.file("sample", "who141_odk_export.csv", package = "CrossVA")
+records_2016_141 <- read.csv(datafile_2016_141)
 whoData2016_141 <- odk2openVA(records, version = "1.4.1")
-InterVA5(whoData2016_151, HIV = "l", Malaria = "l", directory = getwd())
-insilico(whoData2016_141, data.type = "WHO2016")
+
+out3 <- insilico(whoData2016_141, data.type = "WHO2016")
+summary(out3)
+out4 <- InterVA5(whoData2016_141, HIV = "l", Malaria = "l", directory = getwd())
+summary(out4)
+
+## WHO VA Questionnaire 2014
+datafile_2014 <- system.file("sample", "who2014_odk_export.csv", package = "CrossVA")
+records_2014 <- read.csv(datafile_2014)
+whoData2014 <- odk2openVA(records, version = "2014")
+
+out5 <- insilico(whoData2014, data.type = "WHO2016")
+summary(out5)
+out6 <- InterVA5(whoData2014, HIV = "l", Malaria = "l", directory = getwd())
+summary(out6)
 ```

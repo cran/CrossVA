@@ -12,12 +12,22 @@ export of records collected with the WHO questionnaire.}
 }
 \description{
 \code{odk2openVA} transforms data collected with the 2016 WHO VA instrument
-  into a format that can be used with the InterVA5 and InSilicoVA alogrithms
-  for coding cause of death. It is a wrapper for functions that handle
-  specific versions of the 2016 WHO VA instrument --  namely, 1.4.1 and 1.5.1.
-  If the input (odk) includes a column containing the string:
-  "age_neonate_hours", then the function assumes the questionnaire version is
-  1.4.1 (and assumes version 1.5.1 if the string is not located).
+  or the 2014 WHO VA instrument  into a format that can be used with the
+  InterVA5 and InSilicoVA alogrithms for coding cause of death. It is a
+  wrapper for functions that handle specific versions of the 2016 WHO VA
+  instrument --  namely, 1.4.1 and 1.5.1 -- as well as the 2014 WHO VA
+  instrument.
+}
+\details{
+This is a wrapper function that tries to determint the type of WHO VA
+instrument used to collect the data.  If the input (i.e., the odk export)
+includes a column containing the string "ID1A110" (or "id1a110"), then this
+function assumes the data were collected using the 2014 WHO VA instrument.
+If the input (i.e., the odk export) contains the string "age_neonate_hours"
+and does not contain the string "ID1A110" (or "id1a110"), then the function
+assumes the questionnaire version is 1.4.1 from the 2016 instrument.  If
+neither condition is met, then the function assumes the data were collected
+with version 1.5.1 of the 2016 WHO VA instrument.
 }
 \examples{
 ## Example with 2016 WHO VA instrument version 1.5.1

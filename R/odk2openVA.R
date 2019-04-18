@@ -1,16 +1,26 @@
 #' Map VA records to InterVA5 & InSilico (with option data.type = "WHO2016").
 #'
 #' \code{odk2openVA} transforms data collected with the 2016 WHO VA instrument
-#'   into a format that can be used with the InterVA5 and InSilicoVA alogrithms
-#'   for coding cause of death. It is a wrapper for functions that handle
-#'   specific versions of the 2016 WHO VA instrument --  namely, 1.4.1 and 1.5.1.
-#'   If the input (odk) includes a column containing the string:
-#'   "age_neonate_hours", then the function assumes the questionnaire version is
-#'   1.4.1 (and assumes version 1.5.1 if the string is not located).
+#'   or the 2014 WHO VA instrument  into a format that can be used with the
+#'   InterVA5 and InSilicoVA alogrithms for coding cause of death. It is a
+#'   wrapper for functions that handle specific versions of the 2016 WHO VA
+#'   instrument --  namely, 1.4.1 and 1.5.1 -- as well as the 2014 WHO VA
+#'   instrument.
 #'
 #' @param odk A dataframe, obtained from reading an ODK Briefcase
 #'   export of records collected with the WHO questionnaire.
 #'
+#' @details
+#' This is a wrapper function that tries to determint the type of WHO VA
+#' instrument used to collect the data.  If the input (i.e., the odk export)
+#' includes a column containing the string "ID1A110" (or "id1a110"), then this
+#' function assumes the data were collected using the 2014 WHO VA instrument.
+#' If the input (i.e., the odk export) contains the string "age_neonate_hours"
+#' and does not contain the string "ID1A110" (or "id1a110"), then the function
+#' assumes the questionnaire version is 1.4.1 from the 2016 instrument.  If
+#' neither condition is met, then the function assumes the data were collected
+#' with version 1.5.1 of the 2016 WHO VA instrument.
+#' 
 #' @examples
 #' ## Example with 2016 WHO VA instrument version 1.5.1
 #' record_f_name151 <- system.file("sample", "who151_odk_export.csv", package = "CrossVA")
@@ -26,12 +36,27 @@
 #'
 odk2openVA <- function(odk){
 
-    hasAgeNeonateHours <- grep("age_neonate_hours", tolower(names(odk)))
-    whoVersion <- ifelse(length(hasAgeNeonateHours) == 1, "1.4.1", "1.5.1")
+    id1A110 <- grep( "id1a110", tolower(names(odk)) ) # check for 2014 instrument
+    version2014 <- length(id1A110) == 1
 
-    cat(paste("Assuming WHO questionnaire version is ", whoVersion, "\n", sep = ""))
+    hasAgeNeonateHours <- grep( "age_neonate_hours", tolower(names(odk)) ) # check 2016 version
+    version2016_151 <- length(hasAgeNeonateHours) == 0
 
-    if (whoVersion == "1.5.1") return( odk2openVA_v151(odk) )
-    if (whoVersion == "1.4.1") return( odk2openVA_v141(odk) )
+    version2016_141 <- !version2014 & !version2016_151
+
+    if ( version2014 ) {
+        cat( paste("Assuming 2014 WHO questionnaire", "\n", sep = "") )
+        return( odk2openVA_2014(odk) )
+    }
+
+    if ( version2016_151 ) {
+        cat( paste("Assuming 2016 WHO questionnaire version is 1.5.1", "\n", sep = "") )
+        return( odk2openVA_v151(odk) )
+    }
+
+    if ( version2016_141 ) {
+        cat( paste("Assuming 2016 WHO questionnaire version is 1.4.1", "\n", sep = "") )
+        return( odk2openVA_v141(odk) )
+    }
 
 }
