@@ -2,7 +2,7 @@ Package: CrossVA
 Type: Package
 Title: Verbal Autopsy Data Transformation for InSilicoVA and InterVA5
         Algorithms
-Version: 0.9.6
+Version: 0.9.7
 Description: Enables transformation of Verbal Autopsy data collected with the WHO 2016 questionnaire (versions 1.4.1 & 1.5.1)
   or the WHO 2014 questionnaire for automated coding of Cause of Death using the InSilicoVA (data.type = "WHO2016") and
   InterVA5 algorithms. Previous versions of this package supported user-supplied mappings (via the map_records function), but
@@ -12,7 +12,7 @@ Depends: R (>= 3.2.0)
 LazyData: TRUE
 RoxygenNote: 6.1.1
 Imports: stringi
-Packaged: 2019-04-18 21:23:25 UTC; thomas.3912
+Packaged: 2019-04-19 06:31:27 UTC; thomas.3912
 Authors@R: c(
   person("Eungang", "Choi", role = "aut"),
   person("Sam", "Clark", role = "aut"),
@@ -29,4 +29,4 @@ Author: Eungang Choi [aut],
   Jason Thomas [aut, cre]
 Maintainer: Jason Thomas <jarathomas@gmail.com>
 Repository: CRAN
-Date/Publication: 2019-04-18 21:50:03 UTC
+Date/Publication: 2019-04-21 15:50:03 UTC

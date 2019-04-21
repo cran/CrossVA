@@ -14,8 +14,6 @@
 #' output <- odk2openVA_2014(records)
 #' }
 #'
-#' @importFrom stringi stri_detect_fixed
-#' @importFrom stringi stri_detect_regex 
 #' @importFrom stringi stri_endswith_fixed
 #' 
 #' @export
@@ -133,7 +131,7 @@ odk2openVA_2014 <- function(odk){
     iv5Out <- matrix(".", nrow=nrow(odk), ncol=353)
 
     # check for missing indicators
-    tmpMat <- matrix(sapply(whoNames, stri_detect_fixed, str = odkNames), nrow = length(odkNames))
+    tmpMat <- matrix(sapply(whoNames, stri_endswith_fixed, str = odkNames), nrow = length(odkNames))
     indexData <- apply(tmpMat, 2, which)
     warnZeroMatch <- which(sapply(indexData, length) == 0)
     warnZeroMatch <- warnZeroMatch[!is.na(whoNames[warnZeroMatch])] # remove NA's
@@ -156,11 +154,10 @@ odk2openVA_2014 <- function(odk){
                 267:270, 274:280, 282, 288:290, 292, 296:301, 303, 305, 306,
                 308:312, 316, 318:320, 322:324, 326:329, 333:353)
 
-    ## tmpMat <- matrix(sapply(whoNames[qYesNo], stri_detect_fixed, str = odkNames), nrow = length(odkNames))
     tmpMat <- matrix(
         sapply(
-            paste(whoNames[qYesNo], "$", sep = ""),
-            stri_detect_regex,
+            whoNames[qYesNo],
+            stri_endswith_fixed,
             str = odkNames
         ),
         nrow = length(odkNames)
@@ -193,26 +190,26 @@ odk2openVA_2014 <- function(odk){
     iv5Out[tolower(odk[ , indexData_sex])=="female", 4] <- "y"
 
     # age
-    indexData1y <- which(stri_detect_regex(odkNames, "ageinyears$"))
-    indexData1m <- which(stri_detect_regex(odkNames, "ageinmonths$"))
-    indexData1d <- which(stri_detect_regex(odkNames, "ageindays$"))
+    indexData1y <- which(stri_endswith_fixed(odkNames, "ageinyears"))
+    indexData1m <- which(stri_endswith_fixed(odkNames, "ageinmonths"))
+    indexData1d <- which(stri_endswith_fixed(odkNames, "ageindays"))
 
-    indexData2 <- which(stri_detect_regex(odkNames, "age_group"))
+    indexData2 <- which(stri_endswith_fixed(odkNames, "age_group"))
 
-    indexData3 <- which(stri_detect_regex(odkNames, "age_adult"))
+    indexData3 <- which(stri_endswith_fixed(odkNames, "age_adult"))
 
-    indexData4  <- which(stri_detect_regex(odkNames, "age_child_unit"))
-    indexData4d <- which(stri_detect_regex(odkNames, "age_child_days"))
-    indexData4m <- which(stri_detect_regex(odkNames, "age_child_months"))
-    indexData4y <- which(stri_detect_regex(odkNames, "age_child_years"))
+    indexData4  <- which(stri_endswith_fixed(odkNames, "age_child_unit"))
+    indexData4d <- which(stri_endswith_fixed(odkNames, "age_child_days"))
+    indexData4m <- which(stri_endswith_fixed(odkNames, "age_child_months"))
+    indexData4y <- which(stri_endswith_fixed(odkNames, "age_child_years"))
 
-    indexData5d <- which(stri_detect_regex(odkNames, "age_neonate_days"))
-    indexData5h <- which(stri_detect_regex(odkNames, "age_neonate_hours"))
-    indexData5m <- which(stri_detect_regex(odkNames, "age_neonate_minutes"))
+    indexData5d <- which(stri_endswith_fixed(odkNames, "age_neonate_days"))
+    indexData5h <- which(stri_endswith_fixed(odkNames, "age_neonate_hours"))
+    indexData5m <- which(stri_endswith_fixed(odkNames, "age_neonate_minutes"))
 
-    indexData_isNeonatal <- which(stri_detect_regex(odkNames, "isneonatal$"))
-    indexData_isChild <- which(stri_detect_regex(odkNames, "ischild$"))
-    indexData_isAdult <- which(stri_detect_regex(odkNames, "isadult$"))
+    indexData_isNeonatal <- which(stri_endswith_fixed(odkNames, "isneonatal"))
+    indexData_isChild <- which(stri_endswith_fixed(odkNames, "ischild"))
+    indexData_isAdult <- which(stri_endswith_fixed(odkNames, "isadult"))
 
     #5) Was s(he) aged 65 years or more at death? 65+
     iv5Out[odk[ , indexData1y]>=65, 5] <- "y"
@@ -376,7 +373,7 @@ odk2openVA_2014 <- function(odk){
     #47) Did the baby have a breathing problem?	brth prob (NOT INCLUDED)
 
     #52) Did the final illness last less than 3 weeks? ill <3w.
-    indexData <- which(stri_detect_regex(odkNames, whoNames[52]))
+    indexData <- which(stri_endswith_fixed(odkNames, whoNames[52]))
     iv5Out[odk[ , indexData]< 21, 52] <- "y"
     iv5Out[odk[ , indexData]>=21, 52] <- "n"
 
@@ -596,8 +593,8 @@ odk2openVA_2014 <- function(odk){
 
     #166) Did (s)he have a rash on the trunk or abdomen?	sk ra abd
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[166]))
-    iv5Out[stri_detect_regex(tolower(odk[ , indexData]), "abdomen|trunk"),                166] <- "y"
-    iv5Out[stri_detect_regex(tolower(odk[ , indexData]), negate = TRUE, "abdomen|trunk"), 166] <- "n"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "abdomen|trunk"),                166] <- "y"
+    iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "abdomen|trunk"), 166] <- "n"
     iv5Out[tolower(odk[ , indexData])=="",                                                166] <- "."
 
     #167) Did (s)he have a rash on the extremities?	sk ra ext
