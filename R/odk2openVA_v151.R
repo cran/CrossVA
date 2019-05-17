@@ -251,11 +251,11 @@ odk2openVA_v151 <- function(odk){
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 2 & ageNeonate>=1, 13] <- "y"
 
     #14)  Was s(he) a baby who died more than 48 hours from birth, but within the first week? day2-6 iv5Names[14]
-    iv5Out[odk[ , indexData1d]>2 & odk[ , indexData1d]< 7, 13] <- "y"
+    iv5Out[odk[ , indexData1d]>2 & odk[ , indexData1d]< 7, 14] <- "y"
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 7 & ageNeonate>=2, 14] <- "y"
 
     #15) Was s(he) a baby who died after the first week, but within the first month? wk2-4 iv5Names[15]
-    iv5Out[odk[ , indexData1d]>=7 & odk[ , indexData1d]< 28, 13] <- "y"
+    iv5Out[odk[ , indexData1d]>=7 & odk[ , indexData1d]< 28, 15] <- "y"
     iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 28 & ageNeonate>=7, 15] <- "y"
 
     # Finish coding age (5-15) -- if only one age has "y", recode all others to "n"
@@ -611,7 +611,7 @@ odk2openVA_v151 <- function(odk){
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[166]))
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "abdomen|trunk"),                166] <- "y"
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "abdomen|trunk"), 166] <- "n"
-    iv5Out[tolower(odk[ , indexData])=="",                                                166] <- "."
+    iv5Out[tolower(odk[ , indexData])=="",                                                  166] <- "."
 
     #167) Did (s)he have a rash on the extremities?	sk ra ext
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[167]))
@@ -623,7 +623,7 @@ odk2openVA_v151 <- function(odk){
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[168]))
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "everywhere"),                168] <- "y"
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "everywhere"), 168] <- "n"
-    iv5Out[tolower(odk[ , indexData])=="",                                             168] <- "."
+    iv5Out[tolower(odk[ , indexData])=="",                                               168] <- "."
 
     #181) Did (s)he have puffiness of the face for at least one week before death?	sw p f 1+w
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[181]))
@@ -803,7 +803,7 @@ odk2openVA_v151 <- function(odk){
 
     #295) Was the baby born before the eighth month (less than 34 weeks) of pregnancy?	gest 7m
     iv5Out[odk[ , indexData]>=8 & odk[ , indexData]< 88, 295] <- "n"
-    iv5Out[odk[ , indexData]< 8                         , 295] <- "y"
+    iv5Out[odk[ , indexData]< 8,                         295] <- "y"
 
     #304) Did labour and delivery take more than 24 hours?	lab 24+h
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[304]))

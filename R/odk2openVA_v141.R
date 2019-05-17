@@ -624,7 +624,7 @@ odk2openVA_v141 <- function(odk){
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[166]))
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), "abdomen|trunk"),                166] <- "y"
     iv5Out[stri_endswith_fixed(tolower(odk[ , indexData]), negate = TRUE, "abdomen|trunk"), 166] <- "n"
-    iv5Out[tolower(odk[ , indexData])=="",                                                166] <- "."
+    iv5Out[tolower(odk[ , indexData])=="",                                                  166] <- "."
 
     #167) Did (s)he have a rash on the extremities?	sk ra ext
     indexData <- which(stri_endswith_fixed(odkNames, whoNames[167]))

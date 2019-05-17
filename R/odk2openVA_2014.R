@@ -712,8 +712,8 @@ odk2openVA_2014 <- function(odk){
     #248) Did she die within 6 weeks of childbirth? d <6w chb
     indexData_a <- which(stri_endswith_fixed(odkNames, whoNames[248]))
     indexData_b <- which(stri_endswith_fixed(odkNames, "id3c212"))
-    iv5Out[odk[ , indexData_a] == "y" & odk[ , indexData_b] == "y", 243] <- "y"
-    iv5Out[odk[ , indexData_a] == "n" | odk[ , indexData_b] == "n", 243] <- "n"
+    iv5Out[odk[ , indexData_a] == "y" & odk[ , indexData_b] == "y", 248] <- "y"
+    iv5Out[odk[ , indexData_a] == "n" | odk[ , indexData_b] == "n", 248] <- "n"
 
     #252) Did she die during or after her first pregnancy?	1st pr.
     #     WHO question is "How many births, including stillbirths, did she/the mother have before this baby?"
