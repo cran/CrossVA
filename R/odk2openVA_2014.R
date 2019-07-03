@@ -138,11 +138,20 @@ odk2openVA_2014 <- function(odk){
     if (length(warnZeroMatch) > 0) {
         cat(
             paste("Expecting indicator(s) with name(s): ",
-                  whoNames[warnZeroMatch],
+                  whoNames[unique(warnZeroMatch)],
                   sep = ""),
             sep = "\n"
         )
         stop("Problem with data: please add above columns to your data frame")
+    }
+
+    numNA <- 0        # used for tracking columns with NAs
+    indexNA <- NULL
+    flagNonNumeric <- function(x) {
+        return(tryCatch(as.numeric(x),
+                        error = function(c) -9999,
+                        warning = function(c) -9999)
+               )
     }
 
     # function for creating simple Y/N indicators
@@ -191,21 +200,127 @@ odk2openVA_2014 <- function(odk){
 
     # age
     indexData1y <- which(stri_endswith_fixed(odkNames, "ageinyears"))
+    nonNumeric <- lapply(odk[ , indexData1y], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData1y])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData1y] <- NA
+    odk[, indexData1y] <- as.numeric(odk[, indexData1y])
+
     indexData1m <- which(stri_endswith_fixed(odkNames, "ageinmonths"))
+    nonNumeric <- lapply(odk[ , indexData1m], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData1m])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData1m] <- NA
+    odk[, indexData1m] <- as.numeric(odk[, indexData1m])
+
     indexData1d <- which(stri_endswith_fixed(odkNames, "ageindays"))
+    nonNumeric <- lapply(odk[ , indexData1d], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData1d])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData1d] <- NA
+    odk[, indexData1d] <- as.numeric(odk[, indexData1d])
 
     indexData2 <- which(stri_endswith_fixed(odkNames, "age_group"))
 
     indexData3 <- which(stri_endswith_fixed(odkNames, "age_adult"))
+    nonNumeric <- lapply(odk[ , indexData3], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData3])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData3] <- NA
+    odk[, indexData3] <- as.numeric(odk[, indexData3])
 
     indexData4  <- which(stri_endswith_fixed(odkNames, "age_child_unit"))
     indexData4d <- which(stri_endswith_fixed(odkNames, "age_child_days"))
+    nonNumeric <- lapply(odk[ , indexData4d], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData4d])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData4d] <- NA
+    odk[, indexData4d] <- as.numeric(odk[, indexData4d])
+
     indexData4m <- which(stri_endswith_fixed(odkNames, "age_child_months"))
+    nonNumeric <- lapply(odk[ , indexData4m], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData4m])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData4m] <- NA
+    odk[, indexData4m] <- as.numeric(odk[, indexData4m])
+
     indexData4y <- which(stri_endswith_fixed(odkNames, "age_child_years"))
+    nonNumeric <- lapply(odk[ , indexData4y], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData4y])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData4y] <- NA
+    odk[, indexData4y] <- as.numeric(odk[, indexData4y])
 
     indexData5d <- which(stri_endswith_fixed(odkNames, "age_neonate_days"))
+    nonNumeric <- lapply(odk[ , indexData5d], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData5d])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData5d] <- NA
+    odk[, indexData5d] <- as.numeric(odk[, indexData5d])
+
     indexData5h <- which(stri_endswith_fixed(odkNames, "age_neonate_hours"))
+    nonNumeric <- lapply(odk[ , indexData5h], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData5h])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData5h] <- NA
+    odk[, indexData5h] <- as.numeric(odk[, indexData5h])
+
     indexData5m <- which(stri_endswith_fixed(odkNames, "age_neonate_minutes"))
+    nonNumeric <- lapply(odk[ , indexData5m], flagNonNumeric)
+    nonNumeric <- unlist(nonNumeric)
+    containsNA <- ifelse(
+        sum(nonNumeric < 0, na.rm = TRUE) > 0,
+        1, 0)
+    numNA <- numNA + containsNA
+    if (containsNA > 0) indexNA <- c(indexNA, whoNames[indexData5m])
+    nonNumeric[nonNumeric < 0] <- NA
+    odk[is.na(nonNumeric), indexData5m] <- NA
+    odk[, indexData5m] <- as.numeric(odk[, indexData5m])
 
     indexData_isNeonatal <- which(stri_endswith_fixed(odkNames, "isneonatal"))
     indexData_isChild <- which(stri_endswith_fixed(odkNames, "ischild"))
@@ -213,36 +328,53 @@ odk2openVA_2014 <- function(odk){
 
     #5) Was s(he) aged 65 years or more at death? 65+
     iv5Out[odk[ , indexData1y]>=65, 5] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]>=65, 5] <- "y"
-    checkNumeric <- tryCatch(as.numeric(odk[ , indexData1y]),
-                             warning = function(w) return(-9999))
-    if(sum(checkNumeric, na.rm = TRUE) < 0) iv5Out[, 5] <- NA
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" &
+           odk[ , indexData3]>=65, 5] <- "y"
 
     #6) Was s(he) aged 50 to 64 years at death? 50 to 64
     iv5Out[odk[ , indexData1y]< 65 & odk[ , indexData1y]>=50, 6] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ ,indexData2]=="adult" & odk[ ,indexData3]< 65 & odk[ ,indexData3]>=50, 6] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ ,indexData2]=="adult" &
+           odk[ ,indexData3]< 65 & odk[ ,indexData3]>=50, 6] <- "y"
 
     #7) Was s(he) aged 15 to 49 years at death? 15-49
     iv5Out[odk[ , indexData1y]< 50 & odk[ , indexData1y]>=15, 7] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=15, 7] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" &
+           odk[ , indexData3]< 50 & odk[ , indexData3]>=15, 7] <- "y"
 
     #8) Was s(he) aged 5-14 years at death? 5-14 (adult or child)
     iv5Out[odk[ , indexData1y]< 15 & odk[ , indexData1y]>= 5, 8] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 15 & odk[ , indexData3]>=5, 8] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 15*365.25 & odk[ , indexData4d]>=5*365.25, 8] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 15*12 & odk[ , indexData4m]>=5*12, 8] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="years" & odk[ , indexData4y]< 15 & odk[ , indexData4y]>=5, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" &
+           odk[ , indexData3]< 15 & odk[ , indexData3]>=5, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="days" & odk[ , indexData4d]< 15*365.25 &
+           odk[ , indexData4d]>=5*365.25, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="months" & odk[ , indexData4m]< 15*12 &
+           odk[ , indexData4m]>=5*12, 8] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="years" & odk[ , indexData4y]< 15 &
+           odk[ , indexData4y]>=5, 8] <- "y"
 
     #9) Was s(he) aged 1 to 4 years at death? 1 to 4 (child)
     iv5Out[odk[ , indexData1y]<  5 & odk[ , indexData1y]>=1, 9] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 5*365.25 & odk[ , indexData4d]>=1*365.25, 9] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 5*12 & odk[ , indexData4m]>=1*12, 9] <- "y"
-    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="years" & odk[ , indexData4y]< 5 & odk[ , indexData4y]>=1, 9] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="days" & odk[ , indexData4d]< 5*365.25 &
+           odk[ , indexData4d]>=1*365.25, 9] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="months" & odk[ , indexData4m]< 5*12 &
+           odk[ , indexData4m]>=1*12, 9] <- "y"
+    iv5Out[is.na(odk[ , indexData1y]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="years" & odk[ , indexData4y]< 5 &
+           odk[ , indexData4y]>=1, 9] <- "y"
 
     #10) Was s(he) aged 1 to 11 months at death? 1-11 months (child or neonate?)
     iv5Out[odk[ , indexData1d]< 365.25 & odk[ , indexData1d]>=28, 10] <- "y"
-    iv5Out[is.na(odk[ , indexData1d]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="days" & odk[ , indexData4d]< 365.25 & odk[ , indexData4d]>=28, 10] <- "y"
-    iv5Out[is.na(odk[ , indexData1m]) & odk[ , indexData2]=="child" & odk[ , indexData4]=="months" & odk[ , indexData4m]< 12 & odk[ , indexData4m]>=1, 10] <- "y"
+    iv5Out[is.na(odk[ , indexData1d]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="days" & odk[ , indexData4d]< 365.25 &
+           odk[ , indexData4d]>=28, 10] <- "y"
+    iv5Out[is.na(odk[ , indexData1m]) & odk[ , indexData2]=="child" &
+           odk[ , indexData4]=="months" & odk[ , indexData4m]< 12 &
+           odk[ , indexData4m]>=1, 10] <- "y"
 
     #11) Was s(he) aged < 1 month (28 days) at death? 0 - 27 days (neonate)
     iv5Out[odk[ , indexData1d]< 28, 11] <- "y"
@@ -250,20 +382,26 @@ odk2openVA_2014 <- function(odk){
 
     #12) Was s(he) a live baby who died within 24 hours of birth? day0 iv5Names[12]
     iv5Out[odk[ , indexData1d]< 1, 12] <- "y"
-    ageDays    <- odk[ , indexData5d]
-    ageHours   <- odk[ , indexData5h]/24;      ageHours[is.na(ageHours)]     <- 0
-    ageMinutes <- odk[ , indexData5m]/(24*12); ageMinutes[is.na(ageMinutes)] <- 0
+    ageDays <- odk[ , indexData5d]
+    ageHours <- odk[ , indexData5h]/24
+    ageHours[is.na(ageHours)] <- 0
+    ageMinutes <- odk[ , indexData5m]/(24*12)
+    ageMinutes[is.na(ageMinutes)] <- 0
     ageNeonate <- ageDays + ageHours + ageMinutes
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 1, 12] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) &
+           ageNeonate< 1, 12] <- "y"
 
     #13) Was s(he) a baby who died between 24 and 48 hours of birth? day1 iv5Names[13]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 2 & ageNeonate>=1, 13] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) &
+           ageNeonate< 2 & ageNeonate>=1, 13] <- "y"
 
     #14)  Was s(he) a baby who died more than 48 hours from birth, but within the first week? day2-6 iv5Names[14]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 7 & ageNeonate>=2, 14] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) &
+           ageNeonate< 7 & ageNeonate>=2, 14] <- "y"
 
     #15) Was s(he) a baby who died after the first week, but within the first month? wk2-4 iv5Names[15]
-    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) & ageNeonate< 28 & ageNeonate>=7, 15] <- "y"
+    iv5Out[odk[ , indexData2]=="neonate" & !is.na(odk[ , indexData5d]) &
+           ageNeonate< 28 & ageNeonate>=7, 15] <- "y"
 
     # Finish coding age (5-15) -- if only one age has "y", recode all others to "n"
     ## e.g., if age 65 == "y", then age 50-64 == "n" and age 15-49 == "n" etc.
@@ -284,33 +422,49 @@ odk2openVA_2014 <- function(odk){
     iv5Out[indexData7 == 2 & y11_15, 5:15][ indexData6[indexData7 == 2 & y11_15, ] ] <- "n"
 
     #16) Was she a woman aged 12-19 years at death? f-19
-    iv5Out[ , 16] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 20 & odk[ , indexData1y]>= 12, "y", ".")
+    iv5Out[ , 16] <- ifelse(odk[ , indexData_sex]=="female" &
+                            odk[ , indexData1y]< 20 &
+                            odk[ , indexData1y]>= 12, "y", ".")
     iv5Out[odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 12, 16] <- "n"
     iv5Out[odk[ , indexData_sex]=="female" & odk[ , indexData1y]> 19, 16] <- "n"
 
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 20 & odk[ , indexData3]>=12, 16] <- "y"
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 12, 16] <- "n"
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]> 19, 16] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" &
+           odk[ , indexData3]< 20 & odk[ , indexData3]>=12, 16] <- "y"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]< 12, 16] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]> 19, 16] <- "n"
     iv5Out[odk[ , indexData2]=="neonate", 16] <- "n"
     iv5Out[odk[ , indexData_isNeonatal] == 1, 16] <- "n"
     iv5Out[odk[ , indexData_isChild] == 1 & odk[ , indexData1y] < 12, 16] <- "n"
     iv5Out[odk[ , indexData_isChild] == 1 & odk[ , indexData4y] < 12, 16] <- "n"
-    iv5Out[odk[ , indexData_isChild] == 1 & odk[ , indexData4m] < 12*12, 16] <- "n"
-    iv5Out[odk[ , indexData_isChild] == 1 & odk[ , indexData4d] < 12*365.25, 16] <- "n"
+    iv5Out[odk[ , indexData_isChild] == 1 &
+           odk[ , indexData4m] < 12*12, 16] <- "n"
+    iv5Out[odk[ , indexData_isChild] == 1 &
+           odk[ , indexData4d] < 12*365.25, 16] <- "n"
     iv5Out[odk[ , indexData2] == "child" & odk[ , indexData1y] < 12, 16] <- "n"
     iv5Out[odk[ , indexData2] == "child" & odk[ , indexData4y] < 12, 16] <- "n"
-    iv5Out[odk[ , indexData2] == "child" & odk[ , indexData4m] < 12*12, 16] <- "n"
-    iv5Out[odk[ , indexData2] == "child" & odk[ , indexData4d] < 12*365.25, 16] <- "n"
+    iv5Out[odk[ , indexData2] == "child" &
+           odk[ , indexData4m] < 12*12, 16] <- "n"
+    iv5Out[odk[ , indexData2] == "child" &
+           odk[ , indexData4d] < 12*365.25, 16] <- "n"
     iv5Out[odk[ , indexData_sex]=="male", 16] <- "n"
 
     #17) Was she a woman aged 20-34 years at death? f20-34
-    iv5Out[ , 17] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 35 & odk[ , indexData1y]>= 20, "y", ".")
+    iv5Out[ , 17] <- ifelse(odk[ , indexData_sex]=="female" &
+                            odk[ , indexData1y]< 35 &
+                            odk[ , indexData1y]>= 20, "y", ".")
     iv5Out[odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 20, 17] <-  "n"
     iv5Out[odk[ , indexData_sex]=="female" & odk[ , indexData1y]> 34, 17] <-  "n"
 
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 35 & odk[ , indexData3]>=20, 17] <- "y"
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 20, 17] <- "n"
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]> 34, 17] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]< 35 &
+           odk[ , indexData3]>=20, 17] <- "y"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]< 20, 17] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]> 34, 17] <- "n"
 
     iv5Out[odk[ , indexData2]=="neonate", 17] <- "n"
     iv5Out[odk[ , indexData2]=="child", 17] <- "n"
@@ -319,13 +473,19 @@ odk2openVA_2014 <- function(odk){
     iv5Out[odk[ , indexData_sex]=="male", 17] <- "n"
 
     #18) Was she a woman aged 35 to 49 years at death? f35-49
-    iv5Out[ , 18] <- ifelse(odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 50 & odk[ , indexData1y]>= 35, "y", ".")
+    iv5Out[ , 18] <- ifelse(odk[ , indexData_sex]=="female" &
+                            odk[ , indexData1y]< 50 &
+                            odk[ , indexData1y]>= 35, "y", ".")
     iv5Out[odk[ , indexData_sex]=="female" & odk[ , indexData1y]< 35, 18] <-  "n"
     iv5Out[odk[ , indexData_sex]=="female" & odk[ , indexData1y]> 49, 18] <-  "n"
 
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 & odk[ , indexData3]>=35, 18] <- "y"
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]< 35, 18] <- "n"
-    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) & odk[ , indexData2]=="adult" & odk[ , indexData3]> 49, 18] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]< 50 &
+           odk[ , indexData3]>=35, 18] <- "y"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]< 35, 18] <- "n"
+    iv5Out[odk[ , indexData_sex]=="female" & is.na(odk[ , indexData1y]) &
+           odk[ , indexData2]=="adult" & odk[ , indexData3]> 49, 18] <- "n"
 
     iv5Out[odk[ , indexData2]=="neonate", 18] <- "n"
     iv5Out[odk[ , indexData2]=="child", 18] <- "n"
@@ -856,6 +1016,13 @@ odk2openVA_2014 <- function(odk){
     iv5Out[odk[ , indexData]< 10, 332] <- "n"
 
     # check for NAs
+    if (numNA > 0) {
+        warning("Found unexpected input values (coded as missing)", call. = FALSE)
+        cat("Unexpected values found in: ", sep = "\n")
+        cat(paste(indexNA), sep = ", ")
+        cat("\n")
+    }
+
     numNA <- colSums(is.na(iv5Out))
     indexNA <- which(numNA > 0)
     if (length(indexNA) > 0) {

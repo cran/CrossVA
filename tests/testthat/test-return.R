@@ -32,3 +32,18 @@ test_that("odk2openVA_v141 returns data frame with the right characteristics", {
         expect_false(is.factor(output141[, i]))
     }
 })
+
+test_that("odk2openVA_2014 returns data frame with the right characteristics", {
+
+    record_f_name2014 <- system.file("sample",
+                                    "who2014_odk_export.csv",
+                                    package = "CrossVA")
+    records2014 <- read.csv(record_f_name2014, stringsAsFactors = FALSE)
+    output2014 <- odk2openVA(records2014)
+
+    expect_true(is.data.frame(output2014))
+    expect_equal(ncol(output2014), 354)
+    for (i in 1:354) {
+        expect_false(is.factor(output2014[, i]))
+    }
+})
