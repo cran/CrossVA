@@ -4,11 +4,14 @@
 \alias{odk2openVA}
 \title{Map VA records to InterVA5 & InSilico (with option data.type = "WHO2016").}
 \usage{
-odk2openVA(odk)
+odk2openVA(odk, id_col = "meta.instanceID")
 }
 \arguments{
 \item{odk}{A dataframe, obtained from reading an ODK Briefcase
 export of records collected with the WHO questionnaire.}
+
+\item{id_col}{A character string of the column name (in odk) with the
+unique ID for each death.}
 }
 \description{
 \code{odk2openVA} transforms data collected with the 2016 WHO VA instrument
@@ -28,6 +31,11 @@ and does not contain the string "ID1A110" (or "id1a110"), then the function
 assumes the questionnaire version is 1.4.1 from the 2016 instrument.  If
 neither condition is met, then the function assumes the data were collected
 with version 1.5.1 of the 2016 WHO VA instrument.
+
+By default, this function assumes the data column named 'meta.instanceID'
+contains the unique ID for each record.  If this column is not found, then
+the ID is set to 1:nrow(odk).  Alternatively, the user may specify the
+column name containing the ID by passing a string to the id_col parameter.
 }
 \examples{
 ## Example with 2016 WHO VA instrument version 1.5.1

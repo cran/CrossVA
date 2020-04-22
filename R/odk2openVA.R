@@ -10,6 +10,9 @@
 #' @param odk A dataframe, obtained from reading an ODK Briefcase
 #'   export of records collected with the WHO questionnaire.
 #'
+#' @param id_col A character string of the column name (in odk) with the
+#' unique ID for each death.
+#'
 #' @details
 #' This is a wrapper function that tries to determint the type of WHO VA
 #' instrument used to collect the data.  If the input (i.e., the odk export)
@@ -20,6 +23,11 @@
 #' assumes the questionnaire version is 1.4.1 from the 2016 instrument.  If
 #' neither condition is met, then the function assumes the data were collected
 #' with version 1.5.1 of the 2016 WHO VA instrument.
+#'
+#' By default, this function assumes the data column named 'meta.instanceID'
+#' contains the unique ID for each record.  If this column is not found, then
+#' the ID is set to 1:nrow(odk).  Alternatively, the user may specify the
+#' column name containing the ID by passing a string to the id_col parameter.
 #' 
 #' @examples
 #' ## Example with 2016 WHO VA instrument version 1.5.1
@@ -34,7 +42,7 @@
 #'
 #' @export
 #'
-odk2openVA <- function(odk){
+odk2openVA <- function (odk, id_col = "meta.instanceID") {
 
     id1A110 <- grep( "id1a110", tolower(names(odk)) ) # check for 2014 instrument
     version2014 <- length(id1A110) == 1
@@ -46,17 +54,17 @@ odk2openVA <- function(odk){
 
     if ( version2014 ) {
         cat( paste("Assuming 2014 WHO questionnaire", "\n", sep = "") )
-        return( odk2openVA_2014(odk) )
+        return( odk2openVA_2014(odk, id_col = id_col) )
     }
 
     if ( version2016_151 ) {
         cat( paste("Assuming 2016 WHO questionnaire version is 1.5.1", "\n", sep = "") )
-        return( odk2openVA_v151(odk) )
+        return( odk2openVA_v151(odk, id_col = id_col) )
     }
 
     if ( version2016_141 ) {
         cat( paste("Assuming 2016 WHO questionnaire version is 1.4.1", "\n", sep = "") )
-        return( odk2openVA_v141(odk) )
+        return( odk2openVA_v141(odk, id_col = id_col) )
     }
 
 }

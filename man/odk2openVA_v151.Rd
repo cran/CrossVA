@@ -4,11 +4,14 @@
 \alias{odk2openVA_v151}
 \title{Map VA records (version 1.5.1) to InterVA5 & InSilico (with option data.type = "WHO2016").}
 \usage{
-odk2openVA_v151(odk)
+odk2openVA_v151(odk, id_col = "meta.instanceID")
 }
 \arguments{
 \item{odk}{A dataframe, obtained from reading an ODK Briefcase
 export of records collected with the WHO questionnaire.}
+
+\item{id_col}{A character string of the column name (in odk) with the
+unique ID for each death.}
 }
 \description{
 \code{odk2openVA_v151} transforms data collected with the 2016 WHO VA

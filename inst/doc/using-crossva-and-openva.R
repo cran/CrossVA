@@ -1,9 +1,9 @@
-## ---- include = FALSE----------------------------------------------------
+## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 7, fig.align = "center")
 library(CrossVA)
 library(openVA)
 
-## ----setCWD, eval = FALSE------------------------------------------------
+## ----setCWD, eval = FALSE-----------------------------------------------------
 #  # Print the current working directory
 #  getwd()
 #  #> [1] "C:/Users/LeoMessi/"
@@ -22,7 +22,7 @@ library(openVA)
 #  # Load data into R
 #  odkexport <- read.csv("vaData_2016.csv", stringsAsFactors = FALSE)
 
-## ----loadData, eval = FALSE----------------------------------------------
+## ----loadData, eval = FALSE---------------------------------------------------
 #  # Start by loading the CrossVA and openVA packages from your library
 #  library(CrossVA)
 #  library(openVA)
@@ -39,11 +39,11 @@ library(openVA)
 #  # Use the read.csv() function to load the data
 #  odkexport_v151 <- read.csv(fileName_v151, stringsAsFactors = FALSE)
 
-## ----silentLoadva151, include = FALSE------------------------------------
+## ----silentLoadva151, include = FALSE-----------------------------------------
 fileName_v151 <- system.file("sample", "who151_odk_export.csv", package = "CrossVA")
 odkexport_v151 <- read.csv(fileName_v151, stringsAsFactors = FALSE)
 
-## ----runCrossVA----------------------------------------------------------
+## ----runCrossVA---------------------------------------------------------------
 # Convert VAs using the odk2openVA() function
 ## we will be able to use either InterVA5 or insilico(data.type = "WHO2016") to assign CoD
 openva_input_v151 <- odk2openVA(odkexport_v151)
@@ -54,7 +54,7 @@ dim(openva_input_v151)
 # ID must be the first column
 names(openva_input_v151)
 
-## ----InterVA5------------------------------------------------------------
+## ----InterVA5-----------------------------------------------------------------
 # InterVA5
 run1 <- InterVA5(openva_input_v151,
                  HIV = "l",
@@ -72,7 +72,7 @@ run1 <- InterVA5(openva_input_v151,
 ##                write = TRUE,
 ##                directory = getwd())
 
-## ----InterVA5-summary----------------------------------------------------
+## ----InterVA5-summary---------------------------------------------------------
 # List the top 5 causes in the Cause-Specific Mortality Fraction (CSMF)
 summary(run1)
 
@@ -86,7 +86,7 @@ plotVA(run1)
 # Also note that InterVA5 created the log file, errorlogV5.txt
 dir()
 
-## ----InSilico------------------------------------------------------------
+## ----InSilico-----------------------------------------------------------------
 run2 <- insilico(openva_input_v151, data.type = "WHO2016")
 
 ## run2 <- codeVA(openva_input_v151,
@@ -100,7 +100,7 @@ summary(run2, top = 6)
 # Plot CSMF
 plotVA(run2)
 
-## ----example141----------------------------------------------------------
+## ----example141---------------------------------------------------------------
 # If you have not run the previous code, make sure you have loaded the packages
 # library(CrossVA)
 # library(openVA)
