@@ -15,8 +15,11 @@ unique ID for each death.}
 }
 \description{
 \code{odk2openVA_v151} transforms data collected with the 2016 WHO VA
-  instrument (version 1.5.1) to serve as the input for the InterVA5
-  and InSilicoVA alogrithms for coding cause of death.
+instrument (version 1.5.1) to serve as the input for the InterVA5
+and InSilicoVA alogrithms for coding cause of death.  Note: versions
+1.5.2 and 1.5.2 do not include changes that require modification for
+the data preparation, so the code for version 1.5.1 should also work
+for these later two versions.
 }
 \examples{
 \dontrun{

@@ -1,14 +1,16 @@
 #' Map VA records to InterVA5 & InSilico (with option data.type = "WHO2016").
 #'
 #' \code{odk2openVA} transforms data collected with the 2016 WHO VA instrument
-#'   or the 2014 WHO VA instrument  into a format that can be used with the
-#'   InterVA5 and InSilicoVA alogrithms for coding cause of death. It is a
-#'   wrapper for functions that handle specific versions of the 2016 WHO VA
-#'   instrument --  namely, 1.4.1 and 1.5.1 -- as well as the 2014 WHO VA
-#'   instrument.
+#' or the 2014 WHO VA instrument  into a format that can be used with the
+#' InterVA5 and InSilicoVA alogrithms for coding cause of death. It is a
+#' wrapper for functions that handle specific versions of the 2016 WHO VA
+#' instrument --  namely, 1.4.1 and 1.5.1 -- as well as the 2014 WHO VA
+#' instrument.  Note: versions 1.5.2 and 1.5.2 do not include changes that
+#' require modification for the data preparation, so the code for version
+#' 1.5.1 should also work for these later two versions.
 #'
 #' @param odk A dataframe, obtained from reading an ODK Briefcase
-#'   export of records collected with the WHO questionnaire.
+#' export of records collected with the WHO questionnaire.
 #'
 #' @param id_col A character string of the column name (in odk) with the
 #' unique ID for each death.
@@ -22,7 +24,9 @@
 #' and does not contain the string "ID1A110" (or "id1a110"), then the function
 #' assumes the questionnaire version is 1.4.1 from the 2016 instrument.  If
 #' neither condition is met, then the function assumes the data were collected
-#' with version 1.5.1 of the 2016 WHO VA instrument.
+#' with version 1.5.1 of the 2016 WHO VA instrument.  Note: versions 1.5.2 and
+#' 1.5.2 do not include changes that require modification for the data preparation,
+#' so the code for version 1.5.1 should also work for these later two versions.
 #'
 #' By default, this function assumes the data column named 'meta.instanceID'
 #' contains the unique ID for each record.  If this column is not found, then

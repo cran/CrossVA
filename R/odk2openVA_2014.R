@@ -175,11 +175,24 @@ odk2openVA_2014 <- function (odk, id_col = "meta.instanceID") {
         nrow = length(odkNames)
     )
     indexData <- apply(tmpMat, 2, which)
+     if (is.list(indexData)) {
+        dups <- lapply(indexData, function(x) length(x) > 1)
+        tmpNames <- whoNames[qYesNo]
+        cat(
+            paste("Duplicate column names containing:",
+                  tmpNames[unlist(dups)],
+                  sep = " "),
+            sep = "\n"
+        )
+        stop("Problem with data: please remove or rename one of the duplicate columns.")
+    }
     iv5Out[ , qYesNo] <- as.matrix(odk[ , indexData])
-    iv5Out[iv5Out=="yes"] <- "y"
-    iv5Out[iv5Out=="no"] <- "n"
-    iv5Out[iv5Out=="dk"] <- "."
-    iv5Out[iv5Out=="ref"] <- "."
+    iv5Out[iv5Out=="yes" | iv5Out=="Yes" | iv5Out=="YES"] <- "y"
+    iv5Out[iv5Out=="no" | iv5Out=="No" | iv5Out=="NO"] <- "n"
+    iv5Out[iv5Out=="dk" | iv5Out=="DK" | iv5Out=="Doesn't Know"] <- "."
+    iv5Out[iv5Out=="Doesn't know" | iv5Out=="doesn't know"] <- "."
+    iv5Out[iv5Out=="does not know" | iv5Out=="Does Not Know" | iv5Out=="Does not know"] <- "."
+    iv5Out[iv5Out=="ref" | iv5Out=="Ref" | iv5Out=="REF"] <- "."
     iv5Out[iv5Out==""] <- "."
     iv5Out[is.na(iv5Out)] <- "."
 
